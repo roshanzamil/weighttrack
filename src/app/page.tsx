@@ -310,7 +310,7 @@ function ExerciseDetailView({
 }
 
 
-function FolderView({ folder, onBack, onAddExercise, onDeleteFolder, onLogSet, onDeleteExercise, onSelectExercise }) {
+function FolderView({ folder, onBack, onAddExercise, onDeleteFolder, onLogSet, onDeleteExercise, onSelectExercise, getLatestWorkout }) {
   const [isAddExerciseOpen, setIsAddExerciseOpen] = useState(false);
   const [newExerciseName, setNewExerciseName] = useState("");
   const [selectedPopularExercise, setSelectedPopularExercise] = useState("");
@@ -325,6 +325,14 @@ function FolderView({ folder, onBack, onAddExercise, onDeleteFolder, onLogSet, o
       setSelectedPopularExercise("");
       setIsAddExerciseOpen(false);
     }
+  };
+
+  const ExerciseLastLogged = ({ exerciseId }) => {
+    const lastWorkout = getLatestWorkout(exerciseId);
+    if (!lastWorkout) return <div className="text-xs text-muted-foreground">No sets yet</div>;
+
+    const timeAgo = formatDistanceToNowStrict(parseISO(lastWorkout.date), { addSuffix: true });
+    return <div className="text-xs text-muted-foreground">Last set: {timeAgo}</div>;
   };
 
   return (
@@ -403,28 +411,11 @@ function FolderView({ folder, onBack, onAddExercise, onDeleteFolder, onLogSet, o
           <div className="space-y-3">
             {folder.exercises.map(exercise => (
               <Card key={exercise.id} className="bg-card hover:bg-accent/50 cursor-pointer" onClick={() => onSelectExercise(exercise)}>
-                <CardHeader className="flex flex-row items-center justify-between pb-4">
+                <CardHeader>
                   <CardTitle className="text-lg">{exercise.name}</CardTitle>
-                   <Dialog>
-                        <DialogTrigger asChild>
-                           <Button size="sm" onClick={(e) => e.stopPropagation()}>
-                                <Plus className="w-4 h-4 mr-2" /> Add Set
-                           </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Log Set: {exercise.name}</DialogTitle>
-                            </DialogHeader>
-                            <WorkoutLogger
-                                onAddWorkout={(workout) => {
-                                    onLogSet(workout);
-                                }}
-                                exerciseName={exercise.name}
-                                exerciseId={exercise.id}
-                                inDialog={true}
-                            />
-                        </DialogContent>
-                    </Dialog>
+                  <CardDescription>
+                    <ExerciseLastLogged exerciseId={exercise.id} />
+                  </CardDescription>
                 </CardHeader>
               </Card>
             ))}
@@ -442,6 +433,7 @@ function MainContent() {
     updateWorkoutSet,
     deleteWorkoutSet,
     getHistoryForExercise,
+    getLatestWorkout,
     folders,
     addFolder,
     addExerciseToFolder,
@@ -544,6 +536,7 @@ function MainContent() {
       onLogSet={handleLogSet}
       onDeleteExercise={handleDeleteExercise}
       onSelectExercise={handleSelectExercise}
+      getLatestWorkout={getLatestWorkout}
       />
   }
 
