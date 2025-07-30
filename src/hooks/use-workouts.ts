@@ -35,13 +35,18 @@ export function useWorkouts(user: User | null) {
      if (!user) return;
     const { data, error } = await supabase
       .from('workout_sets')
-      .select('*')
+      .select('*, exercises(name)')
       .eq('user_id', user.id)
       .order('date', { ascending: false });
+
     if (error) {
       toast({ title: "Error fetching workouts", description: error.message, variant: "destructive" });
     } else {
-      setWorkouts(data || []);
+      const formattedWorkouts = data.map(w => ({
+        ...w,
+        exerciseName: (w.exercises as any)?.name || 'Unknown Exercise',
+      }));
+      setWorkouts(formattedWorkouts || []);
     }
   }, [toast, user]);
 
@@ -57,39 +62,50 @@ export function useWorkouts(user: User | null) {
 
   const addWorkout = useCallback(async (newWorkout: NewWorkoutSet) => {
     if (!user) return;
-    const workoutWithUser = {
-      ...newWorkout,
+
+    const { exerciseName, ...restOfWorkout } = newWorkout;
+
+    const workoutToInsert = {
+      ...restOfWorkout,
       date: new Date().toISOString(),
       notes: newWorkout.notes || '',
       user_id: user.id
     }
     const { data, error } = await supabase
       .from('workout_sets')
-      .insert(workoutWithUser)
-      .select()
+      .insert(workoutToInsert)
+      .select('*, exercises(name)')
       .single();
 
     if (error) {
       toast({ title: "Error adding workout", description: error.message, variant: "destructive" });
     } else if (data) {
-      setWorkouts(prev => [data, ...prev]);
+       const formattedWorkout = {
+         ...data,
+         exerciseName: (data.exercises as any)?.name || 'Unknown Exercise',
+       };
+      setWorkouts(prev => [formattedWorkout, ...prev]);
     }
   }, [toast, user]);
 
 
   const updateWorkoutSet = useCallback(async (updatedSet: WorkoutSet) => {
-    const { user_id, ...restOfSet } = updatedSet; // user_id is not mutable
+    const { user_id, exerciseName, ...restOfSet } = updatedSet; // user_id is not mutable
     const { data, error } = await supabase
       .from('workout_sets')
       .update(restOfSet)
       .eq('id', restOfSet.id)
-      .select()
+      .select('*, exercises(name)')
       .single();
     
     if (error) {
         toast({ title: "Error updating set", description: error.message, variant: "destructive" });
     } else if (data) {
-        setWorkouts(prev => prev.map(w => w.id === data.id ? data : w));
+        const formattedWorkout = {
+          ...data,
+          exerciseName: (data.exercises as any)?.name || 'Unknown Exercise',
+        };
+        setWorkouts(prev => prev.map(w => w.id === formattedWorkout.id ? formattedWorkout : w));
     }
   }, [toast]);
 
@@ -159,7 +175,7 @@ export function useWorkouts(user: User | null) {
             return folder;
         }));
         // also delete orphaned workouts
-        setWorkouts(prev => prev.filter(w => w.exerciseId !== exerciseId));
+        setWorkouts(prev => prev.filter(w => w.exercise_id !== exerciseId));
     }
   }, [toast]);
 
@@ -171,7 +187,7 @@ export function useWorkouts(user: User | null) {
 
   const getHistoryForExercise = useCallback((exerciseId: string) => {
     return workouts
-      .filter(w => w.exerciseId === exerciseId)
+      .filter(w => w.exercise_id === exerciseId)
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [workouts]);
 

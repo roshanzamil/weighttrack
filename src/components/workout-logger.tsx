@@ -23,7 +23,7 @@ import { DialogClose } from "./ui/dialog";
 
 const formSchema = z.object({
   exerciseName: z.string(),
-  exerciseId: z.string(),
+  exercise_id: z.string(),
   weight: z.coerce.number().min(0, { message: "Weight must be a positive number." }),
   reps: z.coerce.number().min(1, { message: "Reps must be at least 1." }),
 });
@@ -41,7 +41,7 @@ export function WorkoutLogger({ onAddWorkout, exerciseName, exerciseId, inDialog
     resolver: zodResolver(formSchema),
     defaultValues: {
       exerciseName: exerciseName || "",
-      exerciseId: exerciseId || "",
+      exercise_id: exerciseId || "",
       weight: 0,
       reps: 0,
     },
@@ -49,12 +49,12 @@ export function WorkoutLogger({ onAddWorkout, exerciseName, exerciseId, inDialog
 
   useEffect(() => {
       form.setValue("exerciseName", exerciseName);
-      form.setValue("exerciseId", exerciseId);
+      form.setValue("exercise_id", exerciseId);
   }, [exerciseName, exerciseId, form]);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
      const newSet: NewWorkoutSet = {
-        exercise_id: values.exerciseId,
+        exercise_id: values.exercise_id,
         exerciseName: values.exerciseName,
         weight: values.weight,
         reps: values.reps,
@@ -66,7 +66,7 @@ export function WorkoutLogger({ onAddWorkout, exerciseName, exerciseId, inDialog
           description: `${values.exerciseName} added to your history.`,
         });
     }
-    form.reset({exerciseName: exerciseName || "", exerciseId: exerciseId || "", weight: 0, reps: 0});
+    form.reset({exerciseName: exerciseName || "", exercise_id: exerciseId || "", weight: 0, reps: 0});
   }
   
   const content = (
