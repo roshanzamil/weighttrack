@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState } from "react";
@@ -63,7 +62,7 @@ const popularExercises = [
   "Pull Up", "Dumbbell Curl", "Tricep Extension", "Leg Press", "Lat Pulldown"
 ];
 
-function EditSetDialog({ set, isOpen, onOpenChange, onUpdateSet, onDeleteSet }) {
+function EditSetDialog({ set, isOpen, onOpenChange, onUpdateSet, onDeleteSet, exerciseName }) {
     if (!set) return null;
 
     const [editedWeight, setEditedWeight] = useState(set.weight);
@@ -96,7 +95,7 @@ function EditSetDialog({ set, isOpen, onOpenChange, onUpdateSet, onDeleteSet }) 
                 <div className="space-y-4">
                     <div className="p-3 rounded-md bg-accent">
                       <Label className="text-xs text-muted-foreground">Exercise</Label>
-                      <p>{set.exerciseName}</p>
+                      <p>{exerciseName}</p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -292,6 +291,7 @@ function ExerciseDetailView({
           onOpenChange={() => setEditingSet(null)}
           onUpdateSet={onUpdateSet}
           onDeleteSet={onDeleteSet}
+          exerciseName={exercise.name}
       />
     </div>
   );
@@ -463,7 +463,11 @@ function MainContent() {
   }
 
   const handleLogSet = (workout: NewWorkoutSet) => {
-    addWorkout(workout);
+    const newSet: NewWorkoutSet = {
+        ...workout,
+        exercise_id: workout.exerciseId!,
+    }
+    addWorkout(newSet);
     toast({
       title: "Workout Logged!",
       description: `${workout.exerciseName} added to your history.`,

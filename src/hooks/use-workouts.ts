@@ -3,111 +3,155 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { type WorkoutSet, type NewWorkoutSet, type Folder, type Exercise } from '@/lib/types';
-
-const WORKOUTS_STORAGE_KEY = 'overload-pro-workouts';
-const FOLDERS_STORAGE_KEY = 'overload-pro-folders';
+import { supabase } from '@/lib/supabaseClient';
+import { useToast } from './use-toast';
 
 export function useWorkouts() {
   const [workouts, setWorkouts] = useState<WorkoutSet[]>([]);
   const [folders, setFolders] = useState<Folder[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  const fetchFoldersAndExercises = useCallback(async () => {
+    setLoading(true);
+    const { data: foldersData, error: foldersError } = await supabase
+      .from('folders')
+      .select(`
+        *,
+        exercises (*)
+      `);
+
+    if (foldersError) {
+      toast({ title: "Error fetching folders", description: foldersError.message, variant: "destructive" });
+    } else {
+      setFolders(foldersData || []);
+    }
+  }, [toast]);
+
+  const fetchWorkouts = useCallback(async () => {
+    const { data, error } = await supabase.from('workout_sets').select('*').order('date', { ascending: false });
+    if (error) {
+      toast({ title: "Error fetching workouts", description: error.message, variant: "destructive" });
+    } else {
+      setWorkouts(data || []);
+    }
+  }, [toast]);
+
 
   useEffect(() => {
-    try {
-      const storedWorkouts = localStorage.getItem(WORKOUTS_STORAGE_KEY);
-      if (storedWorkouts) {
-        setWorkouts(JSON.parse(storedWorkouts));
-      }
-      const storedFolders = localStorage.getItem(FOLDERS_STORAGE_KEY);
-       if (storedFolders) {
-        setFolders(JSON.parse(storedFolders));
-      }
-    } catch (error) {
-      console.error("Failed to load data from localStorage", error);
-    }
-    setIsLoaded(true);
-  }, []);
+    fetchFoldersAndExercises();
+    fetchWorkouts();
+    setLoading(false);
+  }, [fetchFoldersAndExercises, fetchWorkouts]);
 
-  useEffect(() => {
-    if (isLoaded) {
-      try {
-        localStorage.setItem(WORKOUTS_STORAGE_KEY, JSON.stringify(workouts));
-        localStorage.setItem(FOLDERS_STORAGE_KEY, JSON.stringify(folders));
-      } catch (error) {
-        console.error("Failed to save data to localStorage", error);
-      }
-    }
-  }, [workouts, folders, isLoaded]);
 
-  const addWorkout = useCallback((newWorkout: NewWorkoutSet) => {
-    const workoutWithMetadata: WorkoutSet = {
+  const addWorkout = useCallback(async (newWorkout: NewWorkoutSet) => {
+    const workoutWithDate = {
       ...newWorkout,
-      id: new Date().toISOString() + Math.random(),
       date: new Date().toISOString(),
       notes: newWorkout.notes || ''
-    };
-    setWorkouts(prevWorkouts => [workoutWithMetadata, ...prevWorkouts]);
-  }, []);
+    }
+    const { data, error } = await supabase
+      .from('workout_sets')
+      .insert(workoutWithDate)
+      .select()
+      .single();
 
-  const updateWorkoutSet = useCallback((updatedSet: WorkoutSet) => {
-    setWorkouts(prev => prev.map(w => w.id === updatedSet.id ? updatedSet : w));
-  }, []);
+    if (error) {
+      toast({ title: "Error adding workout", description: error.message, variant: "destructive" });
+    } else if (data) {
+      setWorkouts(prev => [data, ...prev]);
+    }
+  }, [toast]);
 
-  const deleteWorkoutSet = useCallback((workoutId: string) => {
-    setWorkouts(prev => prev.filter(w => w.id !== workoutId));
-  }, []);
 
-  const addFolder = useCallback((name: string, description: string) => {
-    const newFolder: Folder = {
-      id: new Date().toISOString() + Math.random(),
-      name,
-      description,
-      exercises: [],
-    };
-    setFolders(prev => [...prev, newFolder]);
-  }, []);
+  const updateWorkoutSet = useCallback(async (updatedSet: WorkoutSet) => {
+    const { data, error } = await supabase
+      .from('workout_sets')
+      .update(updatedSet)
+      .eq('id', updatedSet.id)
+      .select()
+      .single();
+    
+    if (error) {
+        toast({ title: "Error updating set", description: error.message, variant: "destructive" });
+    } else if (data) {
+        setWorkouts(prev => prev.map(w => w.id === data.id ? data : w));
+    }
+  }, [toast]);
 
-  const deleteFolder = useCallback((folderId: string) => {
-    setFolders(prev => prev.filter(f => f.id !== folderId));
-  }, []);
+  const deleteWorkoutSet = useCallback(async (workoutId: string) => {
+     const { error } = await supabase.from('workout_sets').delete().eq('id', workoutId);
+     if (error) {
+        toast({ title: "Error deleting set", description: error.message, variant: "destructive" });
+     } else {
+        setWorkouts(prev => prev.filter(w => w.id !== workoutId));
+     }
+  }, [toast]);
 
-  const addExerciseToFolder = useCallback((folderId: string, exerciseName: string) => {
-    const newExercise: Exercise = {
-      id: new Date().toISOString() + Math.random(),
-      name: exerciseName,
-    };
-    setFolders(prev => prev.map(folder => {
-      if (folder.id === folderId) {
-        // Prevent adding duplicate exercise names within the same folder
-        if (folder.exercises.some(ex => ex.name.toLowerCase() === exerciseName.toLowerCase())) {
+  const addFolder = useCallback(async (name: string, description: string) => {
+    const { data, error } = await supabase
+        .from('folders')
+        .insert({ name, description })
+        .select()
+        .single();
+    
+    if (error) {
+        toast({ title: "Error creating folder", description: error.message, variant: "destructive" });
+    } else if (data) {
+        setFolders(prev => [...prev, { ...data, exercises: []}]);
+    }
+  }, [toast]);
+
+  const deleteFolder = useCallback(async (folderId: string) => {
+    // Supabase will cascade delete exercises and sets if set up correctly
+    const { error } = await supabase.from('folders').delete().eq('id', folderId);
+     if (error) {
+        toast({ title: "Error deleting folder", description: error.message, variant: "destructive" });
+     } else {
+        setFolders(prev => prev.filter(f => f.id !== folderId));
+     }
+  }, [toast]);
+
+  const addExerciseToFolder = useCallback(async (folderId: string, exerciseName: string) => {
+    const { data, error } = await supabase
+        .from('exercises')
+        .insert({ folder_id: folderId, name: exerciseName })
+        .select()
+        .single();
+
+    if (error) {
+        toast({ title: "Error adding exercise", description: error.message, variant: "destructive" });
+    } else if(data) {
+        setFolders(prev => prev.map(folder => {
+            if (folder.id === folderId) {
+                return { ...folder, exercises: [...folder.exercises, data] };
+            }
             return folder;
-        }
-        return { ...folder, exercises: [...folder.exercises, newExercise] };
-      }
-      return folder;
-    }));
-  }, []);
+        }));
+    }
+  }, [toast]);
   
-  const deleteExerciseFromFolder = useCallback((folderId: string, exerciseId: string) => {
-    setFolders(prev => prev.map(folder => {
-      if (folder.id === folderId) {
-        // also delete workouts associated with this exercise
-        setWorkouts(w => w.filter(workout => workout.exerciseId !== exerciseId));
-        return { ...folder, exercises: folder.exercises.filter(ex => ex.id !== exerciseId) };
-      }
-      return folder;
-    }));
-  }, []);
+  const deleteExerciseFromFolder = useCallback(async (folderId: string, exerciseId: string) => {
+    const { error } = await supabase.from('exercises').delete().eq('id', exerciseId);
+    if (error) {
+        toast({ title: "Error deleting exercise", description: error.message, variant: "destructive" });
+    } else {
+        setFolders(prev => prev.map(folder => {
+            if (folder.id === folderId) {
+                return { ...folder, exercises: folder.exercises.filter(ex => ex.id !== exerciseId) };
+            }
+            return folder;
+        }));
+        // also delete orphaned workouts
+        setWorkouts(prev => prev.filter(w => w.exerciseId !== exerciseId));
+    }
+  }, [toast]);
 
 
   const getAllExercises = useCallback(() => {
     const allExercises = folders.flatMap(f => f.exercises);
-    const uniqueExercises = allExercises.filter((exercise, index, self) =>
-        index === self.findIndex((t) => (
-            t.id === exercise.id
-        ))
-    );
-    return uniqueExercises;
+    return allExercises;
   }, [folders]);
 
   const getHistoryForExercise = useCallback((exerciseId: string) => {
@@ -119,7 +163,7 @@ export function useWorkouts() {
   const getPersonalBest = useCallback((exerciseId: string) => {
     const exerciseHistory = getHistoryForExercise(exerciseId);
     if (exerciseHistory.length === 0) return null;
-    return exerciseHistory.reduce((pb, current) => current.weight > pb.weight ? current : pb);
+    return exerciseHistory.reduce((pb, current) => current.weight > pb.weight ? current : pb, exerciseHistory[0]);
   }, [getHistoryForExercise]);
 
   const getLatestWorkout = useCallback((exerciseId: string) => {

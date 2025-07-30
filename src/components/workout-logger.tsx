@@ -53,7 +53,13 @@ export function WorkoutLogger({ onAddWorkout, exerciseName, exerciseId, inDialog
   }, [exerciseName, exerciseId, form]);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    onAddWorkout(values);
+     const newSet: NewWorkoutSet = {
+        exercise_id: values.exerciseId,
+        exerciseName: values.exerciseName,
+        weight: values.weight,
+        reps: values.reps,
+    }
+    onAddWorkout(newSet);
     if (!inDialog) { 
         toast({
           title: "Workout Logged!",

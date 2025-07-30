@@ -1,19 +1,22 @@
 
 export interface WorkoutSet {
   id: string;
-  exerciseId: string; // Added to link set to a specific exercise
-  exerciseName: string;
+  exercise_id: string; // Corresponds to Supabase schema
+  exerciseName: string; // Kept for display purposes
   weight: number;
   reps: number;
   date: string; // ISO string
   notes?: string;
+  exerciseId?: string; // Keep for compatibility, will be mapped
 }
 
 export type NewWorkoutSet = Omit<WorkoutSet, 'id' | 'date'>;
 
+
 export interface Exercise {
     id: string;
     name: string;
+    folder_id: string; // Corresponds to Supabase schema
 }
 
 export interface Folder {
@@ -22,3 +25,4 @@ export interface Folder {
     description: string;
     exercises: Exercise[];
 }
+
