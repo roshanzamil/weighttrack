@@ -5,55 +5,67 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { type WorkoutSet, type NewWorkoutSet, type Folder, type Exercise } from '@/lib/types';
 import { supabase } from '@/lib/supabaseClient';
 import { useToast } from './use-toast';
+import type { User } from '@supabase/supabase-js';
 
-export function useWorkouts() {
+export function useWorkouts(user: User | null) {
   const [workouts, setWorkouts] = useState<WorkoutSet[]>([]);
   const [folders, setFolders] = useState<Folder[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   const fetchFoldersAndExercises = useCallback(async () => {
+    if (!user) return;
     setLoading(true);
     const { data: foldersData, error: foldersError } = await supabase
       .from('folders')
       .select(`
         *,
         exercises (*)
-      `);
+      `)
+      .eq('user_id', user.id);
 
     if (foldersError) {
       toast({ title: "Error fetching folders", description: foldersError.message, variant: "destructive" });
     } else {
       setFolders(foldersData || []);
     }
-  }, [toast]);
+  }, [toast, user]);
 
   const fetchWorkouts = useCallback(async () => {
-    const { data, error } = await supabase.from('workout_sets').select('*').order('date', { ascending: false });
+     if (!user) return;
+    const { data, error } = await supabase
+      .from('workout_sets')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('date', { ascending: false });
     if (error) {
       toast({ title: "Error fetching workouts", description: error.message, variant: "destructive" });
     } else {
       setWorkouts(data || []);
     }
-  }, [toast]);
+  }, [toast, user]);
 
 
   useEffect(() => {
-    fetchFoldersAndExercises();
-    fetchWorkouts();
+    if (user) {
+        fetchFoldersAndExercises();
+        fetchWorkouts();
+    }
     setLoading(false);
-  }, [fetchFoldersAndExercises, fetchWorkouts]);
+  }, [fetchFoldersAndExercises, fetchWorkouts, user]);
 
 
   const addWorkout = useCallback(async (newWorkout: NewWorkoutSet) => {
-    const workoutWithDate = {
+    if (!user) return;
+    const workoutWithUser = {
       ...newWorkout,
       date: new Date().toISOString(),
-      notes: newWorkout.notes || ''
+      notes: newWorkout.notes || '',
+      user_id: user.id
     }
     const { data, error } = await supabase
       .from('workout_sets')
-      .insert(workoutWithDate)
+      .insert(workoutWithUser)
       .select()
       .single();
 
@@ -62,14 +74,15 @@ export function useWorkouts() {
     } else if (data) {
       setWorkouts(prev => [data, ...prev]);
     }
-  }, [toast]);
+  }, [toast, user]);
 
 
   const updateWorkoutSet = useCallback(async (updatedSet: WorkoutSet) => {
+    const { user_id, ...restOfSet } = updatedSet; // user_id is not mutable
     const { data, error } = await supabase
       .from('workout_sets')
-      .update(updatedSet)
-      .eq('id', updatedSet.id)
+      .update(restOfSet)
+      .eq('id', restOfSet.id)
       .select()
       .single();
     
@@ -90,9 +103,10 @@ export function useWorkouts() {
   }, [toast]);
 
   const addFolder = useCallback(async (name: string, description: string) => {
+    if (!user) return;
     const { data, error } = await supabase
         .from('folders')
-        .insert({ name, description })
+        .insert({ name, description, user_id: user.id })
         .select()
         .single();
     
@@ -101,7 +115,7 @@ export function useWorkouts() {
     } else if (data) {
         setFolders(prev => [...prev, { ...data, exercises: []}]);
     }
-  }, [toast]);
+  }, [toast, user]);
 
   const deleteFolder = useCallback(async (folderId: string) => {
     // Supabase will cascade delete exercises and sets if set up correctly
@@ -114,9 +128,10 @@ export function useWorkouts() {
   }, [toast]);
 
   const addExerciseToFolder = useCallback(async (folderId: string, exerciseName: string) => {
+    if (!user) return;
     const { data, error } = await supabase
         .from('exercises')
-        .insert({ folder_id: folderId, name: exerciseName })
+        .insert({ folder_id: folderId, name: exerciseName, user_id: user.id })
         .select()
         .single();
 
@@ -130,7 +145,7 @@ export function useWorkouts() {
             return folder;
         }));
     }
-  }, [toast]);
+  }, [toast, user]);
   
   const deleteExerciseFromFolder = useCallback(async (folderId: string, exerciseId: string) => {
     const { error } = await supabase.from('exercises').delete().eq('id', exerciseId);
@@ -185,5 +200,6 @@ export function useWorkouts() {
     deleteFolder,
     addExerciseToFolder,
     deleteExerciseFromFolder,
-  }), [workouts, addWorkout, updateWorkoutSet, deleteWorkoutSet, getAllExercises, getHistoryForExercise, getPersonalBest, getLatestWorkout, folders, addFolder, deleteFolder, addExerciseToFolder, deleteExerciseFromFolder]);
+    loading,
+  }), [workouts, addWorkout, updateWorkoutSet, deleteWorkoutSet, getAllExercises, getHistoryForExercise, getPersonalBest, getLatestWorkout, folders, addFolder, deleteFolder, addExerciseToFolder, deleteExerciseFromFolder, loading]);
 }

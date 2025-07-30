@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useWorkouts } from "@/hooks/use-workouts";
 import { WorkoutLogger } from "@/components/workout-logger";
 import {
@@ -17,6 +17,7 @@ import {
   Trash2,
   MoreVertical,
   TrendingUp,
+  LogOut,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -46,7 +47,6 @@ import {
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { type NewWorkoutSet, type Exercise, type Folder, type WorkoutSet } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { format, formatDistanceToNowStrict, parseISO } from "date-fns";
@@ -56,6 +56,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar as CalendarIcon } from "lucide-react";
 import { Calendar as CalendarPicker } from "@/components/ui/calendar";
 import { WorkoutComparison } from "@/components/workout-comparison";
+import { supabase } from "@/lib/supabaseClient";
+import { useRouter } from "next/navigation";
+import type { User } from "@supabase/supabase-js";
 
 const popularExercises = [
   "Bench Press", "Squat", "Deadlift", "Overhead Press", "Barbell Row",
@@ -399,7 +402,7 @@ function FolderView({ folder, onBack, onAddExercise, onDeleteFolder, onSelectExe
           <div className="space-y-3">
             {folder.exercises.map(exercise => (
               <Card key={exercise.id} className="bg-card hover:bg-accent/50 cursor-pointer" onClick={() => onSelectExercise(exercise)}>
-                <CardHeader>
+                <CardHeader className="p-4">
                   <CardTitle className="text-lg">{exercise.name}</CardTitle>
                   <CardDescription>
                     <ExerciseLastLogged exerciseId={exercise.id} />
@@ -414,7 +417,7 @@ function FolderView({ folder, onBack, onAddExercise, onDeleteFolder, onSelectExe
   );
 }
 
-function MainContent() {
+function MainContent({user}: {user: User}) {
   const {
     addWorkout,
     updateWorkoutSet,
@@ -426,9 +429,9 @@ function MainContent() {
     addExerciseToFolder,
     deleteFolder,
     deleteExerciseFromFolder,
-  } = useWorkouts();
+  } = useWorkouts(user);
   const { toast } = useToast();
-  const isMobile = useIsMobile();
+  const router = useRouter();
 
 
   const [newFolderName, setNewFolderName] = useState("");
@@ -463,11 +466,7 @@ function MainContent() {
   }
 
   const handleLogSet = (workout: NewWorkoutSet) => {
-    const newSet: NewWorkoutSet = {
-        ...workout,
-        exercise_id: workout.exerciseId!,
-    }
-    addWorkout(newSet);
+    addWorkout(workout);
     toast({
       title: "Workout Logged!",
       description: `${workout.exerciseName} added to your history.`,
@@ -494,6 +493,11 @@ function MainContent() {
   const handleSelectExercise = (exercise: Exercise) => {
     setSelectedExercise(exercise);
     setActiveView('exercise');
+  }
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    router.push('/login');
   }
 
   if (activeView === 'exercise' && selectedFolder && selectedExercise) {
@@ -532,6 +536,9 @@ function MainContent() {
         <div className="flex items-center gap-4">
           <h1 className="text-2xl font-bold">My Workouts</h1>
         </div>
+         <Button variant="ghost" size="icon" onClick={handleSignOut}>
+            <LogOut className="w-5 h-5" />
+        </Button>
       </header>
       <main className="flex-1 overflow-y-auto p-4 space-y-6">
         <div className="space-y-2">
@@ -592,7 +599,43 @@ function MainContent() {
 
 
 export default function Home() {
-  return (
-    <MainContent />
-  )
+    const [user, setUser] = useState<User | null>(null);
+    const [loading, setLoading] = useState(true);
+    const router = useRouter();
+
+    useEffect(() => {
+        const checkUser = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user) {
+                setUser(session.user);
+            } else {
+                router.push('/login');
+            }
+            setLoading(false);
+        };
+
+        checkUser();
+
+        const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_OUT') {
+                router.push('/login');
+            } else if (session?.user){
+                setUser(session.user);
+            }
+        });
+
+        return () => {
+            authListener.subscription.unsubscribe();
+        };
+    }, [router]);
+
+    if (loading) {
+        return <div className="flex items-center justify-center h-screen">Loading...</div>;
+    }
+
+    if (!user) {
+        return null; // Or a loading spinner, router will redirect
+    }
+
+    return <MainContent user={user} />;
 }
