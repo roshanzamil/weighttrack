@@ -62,9 +62,7 @@ export function useWorkouts(user: User | null) {
 
   const addWorkout = useCallback(async (newWorkout: NewWorkoutSet) => {
     if (!user) return;
-
     const { exerciseName, ...restOfWorkout } = newWorkout;
-
     const workoutToInsert = {
       ...restOfWorkout,
       date: new Date().toISOString(),
@@ -95,15 +93,17 @@ export function useWorkouts(user: User | null) {
       .from('workout_sets')
       .update(restOfSet)
       .eq('id', restOfSet.id)
-      .select('*, exercises(name)')
+      .select() // Changed from select('*, exercises(name)')
       .single();
     
     if (error) {
         toast({ title: "Error updating set", description: error.message, variant: "destructive" });
     } else if (data) {
-        const formattedWorkout = {
+        // Since we are not joining the exercises table, we need to manually preserve the exerciseName.
+        const formattedWorkout: WorkoutSet = {
           ...data,
-          exerciseName: (data.exercises as any)?.name || 'Unknown Exercise',
+          user_id: user_id, // data doesn't contain user_id, so we re-add it from the original object
+          exerciseName: exerciseName, // Re-use the existing exercise name
         };
         setWorkouts(prev => prev.map(w => w.id === formattedWorkout.id ? formattedWorkout : w));
     }
