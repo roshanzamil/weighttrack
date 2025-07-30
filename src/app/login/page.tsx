@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Dumbbell } from 'lucide-react';
+import { Anvil } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 function LoginForm({ setLoading, toast }) {
@@ -151,9 +151,9 @@ export default function LoginPage() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
        <div className="flex flex-col items-center gap-4 mb-8">
          <div className="bg-primary/10 p-3 rounded-full border-2 border-primary/30">
-             <Dumbbell className="h-10 w-10 text-primary" />
+             <Anvil className="h-10 w-10 text-primary" />
          </div>
-        <h1 className="text-3xl font-bold">Overload Pro</h1>
+        <h1 className="text-3xl font-bold">Forge by Roshan</h1>
        </div>
       <Card className="w-full max-w-sm">
           <Tabs defaultValue="signin" className="w-full">

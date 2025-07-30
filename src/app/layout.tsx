@@ -3,8 +3,8 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: 'Overload Pro',
-  description: 'Track your lifts, visualize your progress, and crush your goals with AI-powered guidance.',
+  title: 'Forge by Roshan',
+  description: 'Forge your strength. Track your progress. Built by Roshan.',
 };
 
 export default function RootLayout({
