@@ -426,7 +426,6 @@ function MainContent() {
     addExerciseToFolder,
     deleteFolder,
     deleteExerciseFromFolder,
-    getAllExercises
   } = useWorkouts();
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -438,7 +437,6 @@ function MainContent() {
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
 
-  const allExercises = getAllExercises();
   const selectedFolder = folders.find(f => f.id === selectedFolderId);
 
   const handleAddFolder = () => {
@@ -528,11 +526,6 @@ function MainContent() {
     <div className="flex flex-col h-full">
       <header className="flex items-center justify-between p-4 border-b">
         <div className="flex items-center gap-4">
-          {isMobile && (
-             <Button variant="ghost" size="icon">
-              <Settings className="w-6 h-6" />
-            </Button>
-          )}
           <h1 className="text-2xl font-bold">My Workouts</h1>
         </div>
       </header>
@@ -572,16 +565,6 @@ function MainContent() {
         </div>
 
         <div className="space-y-1">
-             <button className="w-full text-left p-2 rounded-md hover:bg-accent flex items-center justify-between" onClick={() => toast({title: "Coming soon!"})}>
-                <div className="flex items-center gap-3">
-                    <Library className="w-5 h-5"/>
-                    <span>My Exercises</span>
-                </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                    <span>{allExercises.length}</span>
-                    <ChevronRight className="w-5 h-5"/>
-                </div>
-            </button>
             {folders.map(folder => (
                  <button key={folder.id} onClick={() => {
                     setSelectedFolderId(folder.id);
@@ -598,51 +581,7 @@ function MainContent() {
                 </button>
             ))}
         </div>
-
-        <div>
-            <Accordion type="single" collapsible defaultValue="item-1">
-                <AccordionItem value="item-1" className="border-none">
-                    <AccordionTrigger>
-                        <h2 className="text-xl font-semibold">Workout Templates</h2>
-                    </AccordionTrigger>
-                    <AccordionContent>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <Card className="bg-card">
-                                <CardHeader>
-                                    <CardTitle>Grow Your Upper Body</CardTitle>
-                                    <CardDescription>Incline Bench Press, Seated Cable Row, Du...</CardDescription>
-                                </CardHeader>
-                            </Card>
-                             <Card className="bg-card">
-                                <CardHeader>
-                                    <CardTitle>Burn Fat & Boost Endurance</CardTitle>
-                                    <CardDescription>Goblet Squat, Kettlebell Swing, Dumbbell Pus...</CardDescription>
-                                </CardHeader>
-                            </Card>
-                        </div>
-                    </AccordionContent>
-                </AccordionItem>
-            </Accordion>
-        </div>
       </main>
-
-      {/* Bottom Nav for Mobile */}
-      {isMobile && (
-        <footer className="sticky bottom-0 left-0 right-0 bg-background border-t p-2 flex justify-around items-center">
-            <Button variant="ghost" className="flex flex-col h-auto items-center gap-1 text-primary">
-                <Dumbbell className="w-6 h-6"/>
-                <span className="text-xs">Sets</span>
-            </Button>
-            <Button variant="ghost" className="flex flex-col h-auto items-center gap-1 text-muted-foreground">
-                <Timer className="w-6 h-6"/>
-                <span className="text-xs">Sessions</span>
-            </Button>
-            <Button variant="ghost" className="flex flex-col h-auto items-center gap-1 text-muted-foreground">
-                <Calendar className="w-6 h-6"/>
-                <span className="text-xs">Today</span>
-            </Button>
-        </footer>
-       )}
     </div>
   );
 }
@@ -653,5 +592,3 @@ export default function Home() {
     <MainContent />
   )
 }
-
-    
