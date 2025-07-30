@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState } from "react";
@@ -70,6 +71,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { Calendar as CalendarPicker } from "@/components/ui/calendar";
+import { WorkoutComparison } from "@/components/workout-comparison";
 
 const popularExercises = [
   "Bench Press", "Squat", "Deadlift", "Overhead Press", "Barbell Row",
@@ -192,6 +194,10 @@ function ExerciseDetailView({
     setEditingSet(set);
   }
 
+  const sessionDates = Object.keys(groupedSets).sort((a,b) => new Date(b).getTime() - new Date(a).getTime());
+  const latestSession = sessionDates[0] ? groupedSets[sessionDates[0]] : [];
+  const previousSession = sessionDates[1] ? groupedSets[sessionDates[1]] : [];
+
   return (
     <div className="flex flex-col h-full bg-background">
       <header className="flex items-center justify-between p-4 border-b sticky top-0 bg-background z-10">
@@ -211,6 +217,9 @@ function ExerciseDetailView({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
+            <DropdownMenuItem onSelect={() => setIsAnalyticsOpen(true)}>
+              <TrendingUp className="w-4 h-4 mr-2" /> View Analytics
+            </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => onDeleteExercise(folder.id, exercise.id)} className="text-destructive">
               <Trash2 className="w-4 h-4 mr-2" />
               Delete Exercise
@@ -220,17 +229,13 @@ function ExerciseDetailView({
       </header>
 
       <main className="flex-1 overflow-y-auto">
-        <div className="p-4 space-y-4">
-          <Button variant="outline" className="w-full justify-start" onClick={() => setIsAnalyticsOpen(true)}>
-            <TrendingUp className="mr-2" /> Analytics
-          </Button>
-        </div>
-
-        <ScrollArea className="h-[calc(100vh-280px)]">
+        
+        <ScrollArea className="h-[calc(100vh-140px)]">
            <div className="p-4 space-y-6">
             {Object.keys(groupedSets).length > 0 ? Object.entries(groupedSets).map(([date, setsInDay], dayIndex) => (
               <div key={date}>
-                <h3 className="text-sm font-semibold text-muted-foreground mb-2 px-1">{date.toUpperCase()}</h3>
+                {dayIndex === 0 && <WorkoutComparison latestSession={latestSession} previousSession={previousSession} />}
+                <h3 className="text-sm font-semibold text-muted-foreground mb-2 px-1 mt-4">{date.toUpperCase()}</h3>
                 <div className="space-y-1">
                   {setsInDay.map((set, setIndex) => (
                     <button 
