@@ -162,8 +162,8 @@ function SwipeableSetRow({ set, setIndexInDay, totalSetsInDay, onEdit, onReLog }
 
     const handlers = useSwipeable({
         onSwiping: (event) => {
-            if (event.dir === 'Left') {
-                const newX = Math.min(0, Math.max(-80, event.deltaX));
+            if (event.dir === 'Right') {
+                const newX = Math.max(0, Math.min(80, event.deltaX));
                 setSwipeX(newX);
             }
         },
@@ -171,7 +171,7 @@ function SwipeableSetRow({ set, setIndexInDay, totalSetsInDay, onEdit, onReLog }
             // Snap back
             setSwipeX(0);
         },
-        onSwipedLeft: () => {
+        onSwipedRight: () => {
             onReLog(set);
         },
         trackMouse: true,
@@ -180,8 +180,8 @@ function SwipeableSetRow({ set, setIndexInDay, totalSetsInDay, onEdit, onReLog }
     return (
         <div {...handlers} className="relative overflow-hidden">
             <div
-                className="absolute inset-y-0 right-0 flex items-center justify-center bg-primary text-primary-foreground px-6"
-                style={{ width: `${Math.abs(swipeX)}px` }}
+                className="absolute inset-y-0 left-0 flex items-center justify-center bg-primary text-primary-foreground px-6"
+                style={{ width: `${swipeX}px` }}
             >
                 <Copy className="w-5 h-5" />
             </div>
@@ -702,5 +702,7 @@ export default function Home() {
 
     return <MainContent user={user} />;
 }
+
+    
 
     
