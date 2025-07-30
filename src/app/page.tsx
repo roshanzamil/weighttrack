@@ -19,6 +19,10 @@ import {
   TrendingUp,
   LogOut,
   Copy,
+  BarChart,
+  Target,
+  Repeat,
+  Weight,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -95,7 +99,7 @@ function EditSetDialog({ set, isOpen, onOpenChange, onUpdateSet, onDeleteSet, ex
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent>
+            <DialogContent onPointerDownOutside={(e) => e.preventDefault()} vaul-drawer-wrapper="">
                 <DialogHeader>
                     <DialogTitle>Edit Set</DialogTitle>
                 </DialogHeader>
@@ -126,8 +130,9 @@ function EditSetDialog({ set, isOpen, onOpenChange, onUpdateSet, onDeleteSet, ex
                             type="date"
                             value={format(editedDate, 'yyyy-MM-dd')}
                             onChange={(e) => {
+                                const dateValue = e.target.value;
                                 // Add 'T00:00:00' to avoid timezone issues where it might select the previous day
-                                const date = new Date(e.target.value + 'T00:00:00');
+                                const date = new Date(dateValue + 'T00:00:00');
                                 if (!isNaN(date.getTime())) {
                                     setEditedDate(date);
                                 }
@@ -276,6 +281,12 @@ function ExerciseDetailView({
   const latestSession = sessionDates[0] ? groupedSets[sessionDates[0]] : [];
   const previousSession = sessionDates[1] ? groupedSets[sessionDates[1]] : [];
 
+  const analyticsStats = {
+    totalVolume: sets.reduce((sum, s) => sum + s.weight * s.reps, 0),
+    totalSets: sets.length,
+    personalBest: sets.reduce((pb, current) => (current.weight > pb.weight ? current : pb), sets[0] || {weight: 0, reps: 0}),
+  };
+
   return (
     <div className="flex flex-col h-full bg-background">
       <header className="flex items-center justify-between p-4 border-b sticky top-0 bg-background z-10">
@@ -362,8 +373,43 @@ function ExerciseDetailView({
         <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>Analytics: {exercise.name}</DialogTitle>
+            <DialogDescription>
+              Your performance overview for this exercise.
+            </DialogDescription>
           </DialogHeader>
-          <div className="h-[400px] w-full">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-4">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Volume</CardTitle>
+                  <Weight className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{analyticsStats.totalVolume.toLocaleString()} kg</div>
+                  <p className="text-xs text-muted-foreground">across {analyticsStats.totalSets} sets</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Personal Best</CardTitle>
+                  <Target className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{analyticsStats.personalBest.weight}kg</div>
+                  <p className="text-xs text-muted-foreground">for {analyticsStats.personalBest.reps} reps</p>
+                </CardContent>
+              </Card>
+               <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Sets</CardTitle>
+                  <Repeat className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{analyticsStats.totalSets}</div>
+                   <p className="text-xs text-muted-foreground invisible">hidden</p>
+                </CardContent>
+              </Card>
+            </div>
+          <div className="h-[250px] md:h-[400px] w-full">
             <ProgressChart data={sets} />
           </div>
         </DialogContent>
