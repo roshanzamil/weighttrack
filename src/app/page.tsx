@@ -23,6 +23,7 @@ import {
   Target,
   Repeat,
   Weight,
+  Info,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -70,12 +71,24 @@ import { cn } from "@/lib/utils";
 
 
 const popularExercises = [
-    "Bench Press", "Squat", "Deadlift", "Overhead Press", "Barbell Row",
-    "Pull Up", "Dumbbell Curl", "Tricep Extension", "Leg Press", "Lat Pulldown",
-    "Incline Dumbbell Press", "Dumbbell Flyes", "Cable Crossover", 
-    "Romanian Deadlift", "Leg Curl", "Leg Extension", "Calf Raise",
-    "Dumbbell Lateral Raise", "Bent Over Row", "Face Pull", "Preacher Curl",
-    "Skull Crusher", "Bulgarian Split Squat", "Hip Thrust", "T-Bar Row"
+    // Chest
+    "Bench Press", "Incline Bench Press", "Decline Bench Press", "Dumbbell Press", "Incline Dumbbell Press",
+    "Dumbbell Flyes", "Cable Crossover", "Push Up", "Dips", "Machine Chest Press",
+    // Back
+    "Deadlift", "Barbell Row", "Bent Over Row", "T-Bar Row", "Pendlay Row", "Pull Up", "Chin Up",
+    "Lat Pulldown", "Seated Cable Row", "Dumbbell Row", "Good Mornings",
+    // Legs
+    "Squat", "Front Squat", "Leg Press", "Leg Extension", "Leg Curl", "Romanian Deadlift",
+    "Bulgarian Split Squat", "Lunge", "Calf Raise", "Hip Thrust", "Hack Squat",
+    // Shoulders
+    "Overhead Press", "Arnold Press", "Dumbbell Lateral Raise", "Front Raise", "Reverse Pec-Deck",
+    "Face Pull", "Upright Row", "Shrugs",
+    // Biceps
+    "Barbell Curl", "Dumbbell Curl", "Hammer Curl", "Preacher Curl", "Concentration Curl", "Cable Curl",
+    // Triceps
+    "Tricep Extension", "Skull Crusher", "Tricep Pushdown", "Close Grip Bench Press", "Overhead Tricep Extension",
+    // Abs
+    "Crunch", "Leg Raise", "Plank", "Russian Twist", "Cable Crunch", "Ab Roller"
 ];
 
 function EditSetDialog({ set, isOpen, onOpenChange, onUpdateSet, onDeleteSet, exerciseName }) {
@@ -292,6 +305,10 @@ function ExerciseDetailView({
     personalBest: sets.reduce((pb, current) => (current.weight > pb.weight ? current : pb), sets[0] || {weight: 0, reps: 0}),
   };
 
+  const handleAboutExercise = () => {
+    window.open(`https://www.google.com/search?q=${encodeURIComponent(exercise.name + " exercise")}`, '_blank');
+  };
+
   return (
     <div className="flex flex-col h-full bg-background">
       <header className="flex items-center justify-between p-4 border-b sticky top-0 bg-background z-10">
@@ -313,6 +330,9 @@ function ExerciseDetailView({
           <DropdownMenuContent>
             <DropdownMenuItem onSelect={() => setIsAnalyticsOpen(true)}>
               <TrendingUp className="w-4 h-4 mr-2" /> View Analytics
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={handleAboutExercise}>
+              <Info className="w-4 h-4 mr-2" /> About Exercise
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => onDeleteExercise(folder.id, exercise.id)} className="text-destructive">
               <Trash2 className="w-4 h-4 mr-2" />
