@@ -88,24 +88,19 @@ export function useWorkouts(user: User | null) {
 
 
   const updateWorkoutSet = useCallback(async (updatedSet: WorkoutSet) => {
+    // Destructure to remove user_id and exerciseName which are not in the workout_sets table
     const { user_id, exerciseName, ...restOfSet } = updatedSet;
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('workout_sets')
       .update(restOfSet)
-      .eq('id', restOfSet.id)
-      .select() // Changed from select('*, exercises(name)')
-      .single();
+      .eq('id', restOfSet.id);
     
     if (error) {
         toast({ title: "Error updating set", description: error.message, variant: "destructive" });
-    } else if (data) {
-        // Since we are not joining the exercises table, we need to manually preserve the exerciseName.
-        const formattedWorkout: WorkoutSet = {
-          ...data,
-          user_id: user_id, // data doesn't contain user_id, so we re-add it from the original object
-          exerciseName: exerciseName, // Re-use the existing exercise name
-        };
-        setWorkouts(prev => prev.map(w => w.id === formattedWorkout.id ? formattedWorkout : w));
+    } else {
+        // If the database update is successful, update the local state with the edited data.
+        // This is more reliable than using the returned data from Supabase which may not have all fields.
+        setWorkouts(prev => prev.map(w => w.id === updatedSet.id ? updatedSet : w));
     }
   }, [toast]);
 
