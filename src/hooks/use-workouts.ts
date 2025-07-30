@@ -1,12 +1,15 @@
+
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { type WorkoutSet, type NewWorkoutSet } from '@/lib/types';
+import { type WorkoutSet, type NewWorkoutSet, type Folder, type Exercise } from '@/lib/types';
 
 const WORKOUTS_STORAGE_KEY = 'overload-pro-workouts';
+const FOLDERS_STORAGE_KEY = 'overload-pro-folders';
 
 export function useWorkouts() {
   const [workouts, setWorkouts] = useState<WorkoutSet[]>([]);
+  const [folders, setFolders] = useState<Folder[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
@@ -15,8 +18,12 @@ export function useWorkouts() {
       if (storedWorkouts) {
         setWorkouts(JSON.parse(storedWorkouts));
       }
+      const storedFolders = localStorage.getItem(FOLDERS_STORAGE_KEY);
+       if (storedFolders) {
+        setFolders(JSON.parse(storedFolders));
+      }
     } catch (error) {
-      console.error("Failed to load workouts from localStorage", error);
+      console.error("Failed to load data from localStorage", error);
     }
     setIsLoaded(true);
   }, []);
@@ -25,11 +32,12 @@ export function useWorkouts() {
     if (isLoaded) {
       try {
         localStorage.setItem(WORKOUTS_STORAGE_KEY, JSON.stringify(workouts));
+        localStorage.setItem(FOLDERS_STORAGE_KEY, JSON.stringify(folders));
       } catch (error) {
-        console.error("Failed to save workouts to localStorage", error);
+        console.error("Failed to save data to localStorage", error);
       }
     }
-  }, [workouts, isLoaded]);
+  }, [workouts, folders, isLoaded]);
 
   const addWorkout = useCallback((newWorkout: NewWorkoutSet) => {
     const workoutWithMetadata: WorkoutSet = {
@@ -38,6 +46,36 @@ export function useWorkouts() {
       date: new Date().toISOString(),
     };
     setWorkouts(prevWorkouts => [workoutWithMetadata, ...prevWorkouts]);
+  }, []);
+
+  const addFolder = useCallback((name: string) => {
+    const newFolder: Folder = {
+      id: new Date().toISOString() + Math.random(),
+      name,
+      exercises: [],
+    };
+    setFolders(prev => [...prev, newFolder]);
+  }, []);
+
+  const deleteFolder = useCallback((folderId: string) => {
+    setFolders(prev => prev.filter(f => f.id !== folderId));
+  }, []);
+
+  const addExerciseToFolder = useCallback((folderId: string, exerciseName: string) => {
+    const newExercise: Exercise = {
+      id: new Date().toISOString() + Math.random(),
+      name: exerciseName,
+    };
+    setFolders(prev => prev.map(folder => {
+      if (folder.id === folderId) {
+        // Prevent adding duplicate exercise names within the same folder
+        if (folder.exercises.some(ex => ex.name.toLowerCase() === exerciseName.toLowerCase())) {
+            return folder;
+        }
+        return { ...folder, exercises: [...folder.exercises, newExercise] };
+      }
+      return folder;
+    }));
   }, []);
 
   const getAllExercises = useCallback(() => {
@@ -69,5 +107,9 @@ export function useWorkouts() {
     getHistoryForExercise,
     getPersonalBest,
     getLatestWorkout,
-  }), [workouts, addWorkout, getAllExercises, getHistoryForExercise, getPersonalBest, getLatestWorkout]);
+    folders,
+    addFolder,
+    deleteFolder,
+    addExerciseToFolder,
+  }), [workouts, addWorkout, getAllExercises, getHistoryForExercise, getPersonalBest, getLatestWorkout, folders, addFolder, deleteFolder, addExerciseToFolder]);
 }

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -17,6 +18,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dumbbell, Plus } from "lucide-react";
 import { type NewWorkoutSet } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
+import { useEffect } from "react";
+import { DialogClose } from "./ui/dialog";
 
 const formSchema = z.object({
   exerciseName: z.string().min(2, {
@@ -28,26 +31,103 @@ const formSchema = z.object({
 
 interface WorkoutLoggerProps {
   onAddWorkout: (workout: NewWorkoutSet) => void;
+  exerciseName?: string;
 }
 
-export function WorkoutLogger({ onAddWorkout }: WorkoutLoggerProps) {
+export function WorkoutLogger({ onAddWorkout, exerciseName }: WorkoutLoggerProps) {
   const { toast } = useToast();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      exerciseName: "",
+      exerciseName: exerciseName || "",
       weight: 0,
       reps: 0,
     },
   });
 
+  useEffect(() => {
+    if (exerciseName) {
+      form.setValue("exerciseName", exerciseName);
+    }
+  }, [exerciseName, form]);
+
   function onSubmit(values: z.infer<typeof formSchema>) {
     onAddWorkout(values);
-    toast({
-      title: "Workout Logged!",
-      description: `${values.exerciseName} added to your history.`,
-    });
-    form.reset();
+    if (!exerciseName) { // Only show toast if not in dialog
+        toast({
+          title: "Workout Logged!",
+          description: `${values.exerciseName} added to your history.`,
+        });
+    }
+    form.reset({exerciseName: exerciseName || "", weight: 0, reps: 0});
+  }
+  
+  const content = (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        {!exerciseName && (
+          <FormField
+            control={form.control}
+            name="exerciseName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Exercise</FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g. Bench Press" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="weight"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Weight (kg)</FormLabel>
+                <FormControl>
+                  <Input type="number" placeholder="60" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="reps"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Reps</FormLabel>
+                <FormControl>
+                  <Input type="number" placeholder="10" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        {exerciseName ? (
+           <DialogClose asChild>
+            <Button type="submit" className="w-full">
+              <Plus className="mr-2 h-4 w-4" />
+              Add Set
+            </Button>
+           </DialogClose>
+        ) : (
+            <Button type="submit" className="w-full">
+              <Plus className="mr-2 h-4 w-4" />
+              Add Set
+            </Button>
+        )}
+
+      </form>
+    </Form>
+  )
+
+  if (exerciseName) {
+    return content;
   }
 
   return (
@@ -59,56 +139,9 @@ export function WorkoutLogger({ onAddWorkout }: WorkoutLoggerProps) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="exerciseName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Exercise</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g. Bench Press" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="weight"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Weight (kg)</FormLabel>
-                    <FormControl>
-                      <Input type="number" placeholder="60" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="reps"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Reps</FormLabel>
-                    <FormControl>
-                      <Input type="number" placeholder="10" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <Button type="submit" className="w-full">
-              <Plus className="mr-2 h-4 w-4" />
-              Add Set
-            </Button>
-          </form>
-        </Form>
+        {content}
       </CardContent>
     </Card>
   );
 }
+

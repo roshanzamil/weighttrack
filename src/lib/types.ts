@@ -1,3 +1,4 @@
+
 export interface WorkoutSet {
   id: string;
   exerciseName: string;
@@ -7,3 +8,14 @@ export interface WorkoutSet {
 }
 
 export type NewWorkoutSet = Omit<WorkoutSet, 'id' | 'date'>;
+
+export interface Exercise {
+    id: string;
+    name: string;
+}
+
+export interface Folder {
+    id: string;
+    name: string;
+    exercises: Exercise[];
+}
