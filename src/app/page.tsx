@@ -76,6 +76,7 @@ function EditSetDialog({ set, isOpen, onOpenChange, onUpdateSet, onDeleteSet, ex
     const [editedReps, setEditedReps] = useState(set.reps);
     const [editedNotes, setEditedNotes] = useState(set.notes || "");
     const [editedDate, setEditedDate] = useState(new Date(set.date));
+    const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
     const handleSave = () => {
         onUpdateSet({
@@ -95,7 +96,11 @@ function EditSetDialog({ set, isOpen, onOpenChange, onUpdateSet, onDeleteSet, ex
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent>
+            <DialogContent onInteractOutside={(e) => {
+                if (isCalendarOpen) {
+                    e.preventDefault();
+                }
+            }}>
                 <DialogHeader>
                     <DialogTitle>Edit Set</DialogTitle>
                 </DialogHeader>
@@ -121,7 +126,7 @@ function EditSetDialog({ set, isOpen, onOpenChange, onUpdateSet, onDeleteSet, ex
                     </div>
                     <div>
                         <Label>Date</Label>
-                        <Popover>
+                        <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                             <PopoverTrigger asChild>
                                 <Button
                                     variant={"outline"}
@@ -135,7 +140,12 @@ function EditSetDialog({ set, isOpen, onOpenChange, onUpdateSet, onDeleteSet, ex
                                 <CalendarPicker
                                     mode="single"
                                     selected={editedDate}
-                                    onSelect={(day) => day && setEditedDate(day)}
+                                    onSelect={(day) => {
+                                        if (day) {
+                                            setEditedDate(day);
+                                            setIsCalendarOpen(false);
+                                        }
+                                    }}
                                     initialFocus
                                 />
                             </PopoverContent>
