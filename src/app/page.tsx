@@ -18,6 +18,7 @@ import {
   MoreVertical,
   TrendingUp,
   LogOut,
+  Copy,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -138,12 +139,12 @@ function EditSetDialog({ set, isOpen, onOpenChange, onUpdateSet, onDeleteSet, ex
                         </Popover>
                     </div>
                 </div>
-                <DialogFooter className="flex-col-reverse sm:flex-row sm:justify-between">
+                <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-between">
                      <Button variant="destructive" onClick={handleDelete} className="sm:mr-auto">
                         <Trash2 className="w-4 h-4 mr-2" />
                         Delete
                     </Button>
-                    <div className="flex flex-col-reverse sm:flex-row gap-2">
+                    <div className="flex flex-col-reverse sm:flex-row sm:gap-2">
                         <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
                         <Button onClick={handleSave}>Save</Button>
                     </div>
@@ -166,6 +167,7 @@ function ExerciseDetailView({
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
   const [isLoggingOpen, setIsLoggingOpen] = useState(false);
   const [editingSet, setEditingSet] = useState<WorkoutSet | null>(null);
+  const { toast } = useToast();
 
   const groupedSets = sets.reduce((acc, set) => {
     const date = format(parseISO(set.date), "eeee, dd MMM yyyy");
@@ -178,6 +180,20 @@ function ExerciseDetailView({
   
   const handleEditSet = (set: WorkoutSet) => {
     setEditingSet(set);
+  }
+
+  const handleReLogSet = (set: WorkoutSet) => {
+    onLogSet({
+      exercise_id: set.exercise_id,
+      exerciseName: exercise.name,
+      weight: set.weight,
+      reps: set.reps,
+      notes: `Re-logged from a previous set.`
+    });
+    toast({
+      title: "Set Re-logged!",
+      description: `${set.weight}kg for ${set.reps} reps added.`
+    })
   }
 
   const sessionDates = Object.keys(groupedSets).sort((a,b) => new Date(b).getTime() - new Date(a).getTime());
@@ -222,27 +238,40 @@ function ExerciseDetailView({
               <div key={date}>
                 {dayIndex === 0 && <WorkoutComparison latestSession={latestSession} previousSession={previousSession} />}
                 <h3 className="text-sm font-semibold text-muted-foreground mb-2 px-1 mt-4">{date.toUpperCase()}</h3>
-                <div className="space-y-1">
+                <div className="space-y-1 group/setlist">
                   {setsInDay.map((set, setIndex) => (
-                    <button 
+                    <div
                       key={set.id} 
-                      className="w-full text-left p-3 rounded-lg bg-card hover:bg-accent transition-colors"
-                      onClick={() => handleEditSet(set)}
+                      className="group/setitem relative flex items-center"
                     >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <span className="font-mono text-sm text-muted-foreground">{setsInDay.length - setIndex}</span>
-                          <div className="text-sm">
-                            {format(parseISO(set.date), 'p')}
+                      <button 
+                        className="w-full text-left p-3 rounded-lg bg-card hover:bg-accent transition-colors"
+                        onClick={() => handleEditSet(set)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <span className="font-mono text-sm text-muted-foreground">{setsInDay.length - setIndex}</span>
+                            <div className="text-sm">
+                              {format(parseISO(set.date), 'p')}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <span className="font-semibold">{set.reps} rep</span>
+                            <span className="font-semibold text-primary">{set.weight} kg</span>
+                            <ChevronRight className="w-5 h-5 text-muted-foreground" />
                           </div>
                         </div>
-                        <div className="flex items-center gap-4">
-                          <span className="font-semibold">{set.reps} rep</span>
-                          <span className="font-semibold text-primary">{set.weight} kg</span>
-                          <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                        </div>
-                      </div>
-                    </button>
+                      </button>
+                       <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="absolute right-12 text-muted-foreground hover:text-primary transition-all opacity-0 group-hover/setitem:opacity-100 md:opacity-100"
+                          onClick={() => handleReLogSet(set)}
+                          aria-label="Re-log set"
+                        >
+                          <Copy className="w-5 h-5" />
+                        </Button>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -639,3 +668,5 @@ export default function Home() {
 
     return <MainContent user={user} />;
 }
+
+    
