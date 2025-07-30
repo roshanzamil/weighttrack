@@ -136,12 +136,12 @@ function EditSetDialog({ set, isOpen, onOpenChange, onUpdateSet, onDeleteSet }) 
                         </Popover>
                     </div>
                 </div>
-                <DialogFooter className="justify-between">
-                     <Button variant="destructive" onClick={handleDelete} className="mr-auto">
+                <DialogFooter className="flex-col-reverse sm:flex-row sm:justify-between">
+                     <Button variant="destructive" onClick={handleDelete} className="sm:mr-auto">
                         <Trash2 className="w-4 h-4 mr-2" />
                         Delete
                     </Button>
-                    <div className="flex gap-2">
+                    <div className="flex flex-col-reverse sm:flex-row gap-2">
                         <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
                         <Button onClick={handleSave}>Save</Button>
                     </div>
