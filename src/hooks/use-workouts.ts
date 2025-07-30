@@ -88,18 +88,17 @@ export function useWorkouts(user: User | null) {
 
 
   const updateWorkoutSet = useCallback(async (updatedSet: WorkoutSet) => {
-    // Destructure to remove user_id and exerciseName which are not in the workout_sets table
-    const { user_id, exerciseName, ...restOfSet } = updatedSet;
+    const { id, exercise_id, date, weight, reps, notes } = updatedSet;
+    const setToUpdate = { id, exercise_id, date, weight, reps, notes };
+
     const { error } = await supabase
       .from('workout_sets')
-      .update(restOfSet)
-      .eq('id', restOfSet.id);
+      .update(setToUpdate)
+      .eq('id', id);
     
     if (error) {
         toast({ title: "Error updating set", description: error.message, variant: "destructive" });
     } else {
-        // If the database update is successful, update the local state with the edited data.
-        // This is more reliable than using the returned data from Supabase which may not have all fields.
         setWorkouts(prev => prev.map(w => w.id === updatedSet.id ? updatedSet : w));
     }
   }, [toast]);
