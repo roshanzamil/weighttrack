@@ -70,8 +70,12 @@ import { cn } from "@/lib/utils";
 
 
 const popularExercises = [
-  "Bench Press", "Squat", "Deadlift", "Overhead Press", "Barbell Row",
-  "Pull Up", "Dumbbell Curl", "Tricep Extension", "Leg Press", "Lat Pulldown"
+    "Bench Press", "Squat", "Deadlift", "Overhead Press", "Barbell Row",
+    "Pull Up", "Dumbbell Curl", "Tricep Extension", "Leg Press", "Lat Pulldown",
+    "Incline Dumbbell Press", "Dumbbell Flyes", "Cable Crossover", 
+    "Romanian Deadlift", "Leg Curl", "Leg Extension", "Calf Raise",
+    "Dumbbell Lateral Raise", "Bent Over Row", "Face Pull", "Preacher Curl",
+    "Skull Crusher", "Bulgarian Split Squat", "Hip Thrust", "T-Bar Row"
 ];
 
 function EditSetDialog({ set, isOpen, onOpenChange, onUpdateSet, onDeleteSet, exerciseName }) {
