@@ -76,7 +76,6 @@ function EditSetDialog({ set, isOpen, onOpenChange, onUpdateSet, onDeleteSet, ex
     const [editedReps, setEditedReps] = useState(set.reps);
     const [editedNotes, setEditedNotes] = useState(set.notes || "");
     const [editedDate, setEditedDate] = useState(new Date(set.date));
-    const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
     const handleSave = () => {
         onUpdateSet({
@@ -96,15 +95,11 @@ function EditSetDialog({ set, isOpen, onOpenChange, onUpdateSet, onDeleteSet, ex
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent onInteractOutside={(e) => {
-                if (isCalendarOpen) {
-                    e.preventDefault();
-                }
-            }}>
+            <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Edit Set</DialogTitle>
                 </DialogHeader>
-                <div className="space-y-4">
+                <div className="space-y-4" vaul-drawer-wrapper="">
                     <div className="p-3 rounded-md bg-accent">
                       <Label className="text-xs text-muted-foreground">Exercise</Label>
                       <p>{exerciseName}</p>
@@ -126,7 +121,7 @@ function EditSetDialog({ set, isOpen, onOpenChange, onUpdateSet, onDeleteSet, ex
                     </div>
                     <div>
                         <Label>Date</Label>
-                        <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                        <Popover>
                             <PopoverTrigger asChild>
                                 <Button
                                     variant={"outline"}
@@ -143,7 +138,6 @@ function EditSetDialog({ set, isOpen, onOpenChange, onUpdateSet, onDeleteSet, ex
                                     onSelect={(day) => {
                                         if (day) {
                                             setEditedDate(day);
-                                            setIsCalendarOpen(false);
                                         }
                                     }}
                                     initialFocus
@@ -738,3 +732,5 @@ export default function Home() {
 
     return <MainContent user={user} />;
 }
+
+    
