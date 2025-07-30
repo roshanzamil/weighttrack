@@ -99,7 +99,7 @@ function EditSetDialog({ set, isOpen, onOpenChange, onUpdateSet, onDeleteSet, ex
                 <DialogHeader>
                     <DialogTitle>Edit Set</DialogTitle>
                 </DialogHeader>
-                <div className="space-y-4" vaul-drawer-wrapper="">
+                <div className="space-y-4">
                     <div className="p-3 rounded-md bg-accent">
                       <Label className="text-xs text-muted-foreground">Exercise</Label>
                       <p>{exerciseName}</p>
@@ -120,30 +120,19 @@ function EditSetDialog({ set, isOpen, onOpenChange, onUpdateSet, onDeleteSet, ex
                         <Textarea id="notes" placeholder="Comment" value={editedNotes} onChange={e => setEditedNotes(e.target.value)} />
                     </div>
                     <div>
-                        <Label>Date</Label>
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button
-                                    variant={"outline"}
-                                    className="w-full justify-start text-left font-normal"
-                                >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {format(editedDate, "PPP")}
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                                <CalendarPicker
-                                    mode="single"
-                                    selected={editedDate}
-                                    onSelect={(day) => {
-                                        if (day) {
-                                            setEditedDate(day);
-                                        }
-                                    }}
-                                    initialFocus
-                                />
-                            </PopoverContent>
-                        </Popover>
+                        <Label htmlFor="date">Date</Label>
+                        <Input
+                            id="date"
+                            type="date"
+                            value={format(editedDate, 'yyyy-MM-dd')}
+                            onChange={(e) => {
+                                // Add 'T00:00:00' to avoid timezone issues where it might select the previous day
+                                const date = new Date(e.target.value + 'T00:00:00');
+                                if (!isNaN(date.getTime())) {
+                                    setEditedDate(date);
+                                }
+                            }}
+                        />
                     </div>
                 </div>
                 <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-between">
