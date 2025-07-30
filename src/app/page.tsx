@@ -371,7 +371,7 @@ function ExerciseDetailView({
 
       {/* Analytics Dialog */}
       <Dialog open={isAnalyticsOpen} onOpenChange={setIsAnalyticsOpen}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-3xl w-[95vw] h-[80vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>Analytics: {exercise.name}</DialogTitle>
             <DialogDescription>
@@ -410,7 +410,7 @@ function ExerciseDetailView({
                 </CardContent>
               </Card>
             </div>
-          <div className="h-[250px] md:h-[400px] w-full">
+          <div className="flex-1 w-full min-h-0">
             <ProgressChart data={sets} />
           </div>
         </DialogContent>
