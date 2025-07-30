@@ -19,6 +19,7 @@ import {
   MoreVertical,
   AlertCircle,
   TrendingUp,
+  X,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -66,11 +67,102 @@ import { format, formatDistanceToNowStrict, parseISO } from "date-fns";
 import { ProgressChart } from "@/components/progress-chart";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarIcon } from "lucide-react";
+import { Calendar as CalendarPicker } from "@/components/ui/calendar";
 
 const popularExercises = [
   "Bench Press", "Squat", "Deadlift", "Overhead Press", "Barbell Row",
   "Pull Up", "Dumbbell Curl", "Tricep Extension", "Leg Press", "Lat Pulldown"
 ];
+
+function EditSetDialog({ set, isOpen, onOpenChange, onUpdateSet, onDeleteSet, allExercises }) {
+    if (!set) return null;
+
+    const [editedWeight, setEditedWeight] = useState(set.weight);
+    const [editedReps, setEditedReps] = useState(set.reps);
+    const [editedNotes, setEditedNotes] = useState(set.notes || "");
+    const [editedDate, setEditedDate] = useState(new Date(set.date));
+
+    const handleSave = () => {
+        onUpdateSet({
+            ...set,
+            weight: Number(editedWeight),
+            reps: Number(editedReps),
+            notes: editedNotes,
+            date: editedDate.toISOString(),
+        });
+        onOpenChange(false);
+    }
+
+    const handleDelete = () => {
+        onDeleteSet(set.id);
+        onOpenChange(false);
+    }
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Edit Set</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                    <div className="p-3 rounded-md bg-accent">
+                      <Label className="text-xs text-muted-foreground">Exercise</Label>
+                      <p>{set.exerciseName}</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <Label htmlFor="reps">Repetitions</Label>
+                            <Input id="reps" type="number" value={editedReps} onChange={e => setEditedReps(Number(e.target.value))} />
+                        </div>
+                        <div>
+                            <Label htmlFor="weight">Weight (kg)</Label>
+                            <Input id="weight" type="number" value={editedWeight} onChange={e => setEditedWeight(Number(e.target.value))} />
+                        </div>
+                    </div>
+                     <div>
+                        <Label htmlFor="notes">Notes</Label>
+                        <Textarea id="notes" placeholder="Comment" value={editedNotes} onChange={e => setEditedNotes(e.target.value)} />
+                    </div>
+                    <div>
+                        <Label>Date</Label>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant={"outline"}
+                                    className="w-full justify-start text-left font-normal"
+                                >
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {format(editedDate, "PPP")}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                                <CalendarPicker
+                                    mode="single"
+                                    selected={editedDate}
+                                    onSelect={(day) => day && setEditedDate(day)}
+                                    initialFocus
+                                />
+                            </PopoverContent>
+                        </Popover>
+                    </div>
+                </div>
+                <DialogFooter className="justify-between">
+                     <Button variant="destructive" onClick={handleDelete} className="mr-auto">
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete
+                    </Button>
+                    <div className="flex gap-2">
+                        <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+                        <Button onClick={handleSave}>Save</Button>
+                    </div>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
 
 function ExerciseDetailView({
   folder,
@@ -79,9 +171,13 @@ function ExerciseDetailView({
   onLogSet,
   onDeleteExercise,
   sets,
+  onUpdateSet,
+  onDeleteSet,
+  allExercises
 }) {
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
   const [isLoggingOpen, setIsLoggingOpen] = useState(false);
+  const [editingSet, setEditingSet] = useState<WorkoutSet | null>(null);
 
   const groupedSets = sets.reduce((acc, set) => {
     const date = format(parseISO(set.date), "eeee, dd MMM yyyy");
@@ -91,26 +187,9 @@ function ExerciseDetailView({
     acc[date].push(set);
     return acc;
   }, {});
-
-  const timeDiff = (date1, date2) => {
-    if (!date2) return null;
-    return formatDistanceToNowStrict(parseISO(date1), {
-      addSuffix: false,
-      unit: 'minute'
-    });
-  }
-
-  const handleRepeatSet = (set: WorkoutSet) => {
-     onLogSet({
-      exerciseId: set.exerciseId,
-      exerciseName: set.exerciseName,
-      weight: set.weight,
-      reps: set.reps
-    });
-    toast({
-      title: "Set Repeated!",
-      description: `Logged ${set.weight}kg for ${set.reps} reps.`
-    })
+  
+  const handleEditSet = (set: WorkoutSet) => {
+    setEditingSet(set);
   }
 
   return (
@@ -145,13 +224,6 @@ function ExerciseDetailView({
           <Button variant="outline" className="w-full justify-start" onClick={() => setIsAnalyticsOpen(true)}>
             <TrendingUp className="mr-2" /> Analytics
           </Button>
-           <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Repeat Sets Instantly</AlertTitle>
-              <AlertDescription>
-                Tap and hold a set to quickly record it again.
-              </AlertDescription>
-            </Alert>
         </div>
 
         <ScrollArea className="h-[calc(100vh-280px)]">
@@ -164,7 +236,7 @@ function ExerciseDetailView({
                     <button 
                       key={set.id} 
                       className="w-full text-left p-3 rounded-lg bg-card hover:bg-accent transition-colors"
-                      onClick={() => handleRepeatSet(set)}
+                      onClick={() => handleEditSet(set)}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
@@ -223,6 +295,16 @@ function ExerciseDetailView({
           </div>
         </DialogContent>
       </Dialog>
+      
+      {/* Edit Set Dialog */}
+      <EditSetDialog
+          set={editingSet}
+          isOpen={!!editingSet}
+          onOpenChange={() => setEditingSet(null)}
+          onUpdateSet={onUpdateSet}
+          onDeleteSet={onDeleteSet}
+          allExercises={allExercises}
+      />
     </div>
   );
 }
@@ -357,12 +439,15 @@ function MainContent() {
   const {
     workouts,
     addWorkout,
+    updateWorkoutSet,
+    deleteWorkoutSet,
     getHistoryForExercise,
     folders,
     addFolder,
     addExerciseToFolder,
     deleteFolder,
     deleteExerciseFromFolder,
+    getAllExercises
   } = useWorkouts();
   const { toast } = useToast();
   const { isMobile, setOpenMobile, openMobile } = useSidebar();
@@ -408,6 +493,23 @@ function MainContent() {
     });
   };
 
+  const handleUpdateSet = (workout: WorkoutSet) => {
+    updateWorkoutSet(workout);
+    toast({
+      title: "Set Updated!",
+      description: `Your set for ${workout.exerciseName} has been updated.`,
+    });
+  };
+
+  const handleDeleteSet = (workoutId: string) => {
+    deleteWorkoutSet(workoutId);
+    toast({
+      title: "Set Deleted",
+      description: "The workout set has been removed from your history.",
+      variant: "destructive"
+    });
+  }
+
   const handleSelectExercise = (exercise: Exercise) => {
     setSelectedExercise(exercise);
     setActiveView('exercise');
@@ -422,8 +524,11 @@ function MainContent() {
         setSelectedExercise(null);
       }}
       onLogSet={handleLogSet}
+      onUpdateSet={handleUpdateSet}
+      onDeleteSet={handleDeleteSet}
       onDeleteExercise={handleDeleteExercise}
       sets={getHistoryForExercise(selectedExercise.id)}
+      allExercises={getAllExercises()}
       />
   }
 

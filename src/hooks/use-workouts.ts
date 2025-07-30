@@ -44,8 +44,17 @@ export function useWorkouts() {
       ...newWorkout,
       id: new Date().toISOString() + Math.random(),
       date: new Date().toISOString(),
+      notes: newWorkout.notes || ''
     };
     setWorkouts(prevWorkouts => [workoutWithMetadata, ...prevWorkouts]);
+  }, []);
+
+  const updateWorkoutSet = useCallback((updatedSet: WorkoutSet) => {
+    setWorkouts(prev => prev.map(w => w.id === updatedSet.id ? updatedSet : w));
+  }, []);
+
+  const deleteWorkoutSet = useCallback((workoutId: string) => {
+    setWorkouts(prev => prev.filter(w => w.id !== workoutId));
   }, []);
 
   const addFolder = useCallback((name: string, description: string) => {
@@ -93,8 +102,12 @@ export function useWorkouts() {
 
   const getAllExercises = useCallback(() => {
     const allExercises = folders.flatMap(f => f.exercises);
-    const uniqueExerciseNames = new Set(allExercises.map(e => e.name));
-    return Array.from(uniqueExerciseNames);
+    const uniqueExercises = allExercises.filter((exercise, index, self) =>
+        index === self.findIndex((t) => (
+            t.id === exercise.id
+        ))
+    );
+    return uniqueExercises;
   }, [folders]);
 
   const getHistoryForExercise = useCallback((exerciseId: string) => {
@@ -117,6 +130,8 @@ export function useWorkouts() {
   return useMemo(() => ({
     workouts,
     addWorkout,
+    updateWorkoutSet,
+    deleteWorkoutSet,
     getAllExercises,
     getHistoryForExercise,
     getPersonalBest,
@@ -126,5 +141,5 @@ export function useWorkouts() {
     deleteFolder,
     addExerciseToFolder,
     deleteExerciseFromFolder,
-  }), [workouts, addWorkout, getAllExercises, getHistoryForExercise, getPersonalBest, getLatestWorkout, folders, addFolder, deleteFolder, addExerciseToFolder, deleteExerciseFromFolder]);
+  }), [workouts, addWorkout, updateWorkoutSet, deleteWorkoutSet, getAllExercises, getHistoryForExercise, getPersonalBest, getLatestWorkout, folders, addFolder, deleteFolder, addExerciseToFolder, deleteExerciseFromFolder]);
 }

@@ -6,6 +6,7 @@ export interface WorkoutSet {
   weight: number;
   reps: number;
   date: string; // ISO string
+  notes?: string;
 }
 
 export type NewWorkoutSet = Omit<WorkoutSet, 'id' | 'date'>;
