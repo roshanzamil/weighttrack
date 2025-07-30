@@ -60,6 +60,9 @@ import { WorkoutComparison } from "@/components/workout-comparison";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
+import { useSwipeable } from "react-swipeable";
+import { cn } from "@/lib/utils";
+
 
 const popularExercises = [
   "Bench Press", "Squat", "Deadlift", "Overhead Press", "Barbell Row",
@@ -154,6 +157,61 @@ function EditSetDialog({ set, isOpen, onOpenChange, onUpdateSet, onDeleteSet, ex
     )
 }
 
+function SwipeableSetRow({ set, setIndexInDay, totalSetsInDay, onEdit, onReLog }) {
+    const [swipeX, setSwipeX] = useState(0);
+
+    const handlers = useSwipeable({
+        onSwiping: (event) => {
+            if (event.dir === 'Left') {
+                const newX = Math.min(0, Math.max(-80, event.deltaX));
+                setSwipeX(newX);
+            }
+        },
+        onSwiped: () => {
+            // Snap back
+            setSwipeX(0);
+        },
+        onSwipedLeft: () => {
+            onReLog(set);
+        },
+        trackMouse: true,
+    });
+
+    return (
+        <div {...handlers} className="relative overflow-hidden">
+            <div
+                className="absolute inset-y-0 right-0 flex items-center justify-center bg-primary text-primary-foreground px-6"
+                style={{ width: `${Math.abs(swipeX)}px` }}
+            >
+                <Copy className="w-5 h-5" />
+            </div>
+            <div
+                className="relative bg-card transition-transform duration-200 ease-in-out"
+                style={{ transform: `translateX(${swipeX}px)` }}
+            >
+                <button
+                    className="w-full text-left p-3 rounded-lg hover:bg-accent transition-colors"
+                    onClick={() => onEdit(set)}
+                >
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <span className="font-mono text-sm text-muted-foreground">{totalSetsInDay - setIndexInDay}</span>
+                            <div className="text-sm">
+                                {format(parseISO(set.date), 'p')}
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            <span className="font-semibold">{set.reps} rep</span>
+                            <span className="font-semibold text-primary">{set.weight} kg</span>
+                            <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                        </div>
+                    </div>
+                </button>
+            </div>
+        </div>
+    );
+}
+
 function ExerciseDetailView({
   folder,
   exercise,
@@ -238,40 +296,16 @@ function ExerciseDetailView({
               <div key={date}>
                 {dayIndex === 0 && <WorkoutComparison latestSession={latestSession} previousSession={previousSession} />}
                 <h3 className="text-sm font-semibold text-muted-foreground mb-2 px-1 mt-4">{date.toUpperCase()}</h3>
-                <div className="space-y-1 group/setlist">
+                <div className="space-y-1">
                   {setsInDay.map((set, setIndex) => (
-                    <div
-                      key={set.id} 
-                      className="group/setitem relative flex items-center"
-                    >
-                      <button 
-                        className="w-full text-left p-3 rounded-lg bg-card hover:bg-accent transition-colors"
-                        onClick={() => handleEditSet(set)}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <span className="font-mono text-sm text-muted-foreground">{setsInDay.length - setIndex}</span>
-                            <div className="text-sm">
-                              {format(parseISO(set.date), 'p')}
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-4">
-                            <span className="font-semibold">{set.reps} rep</span>
-                            <span className="font-semibold text-primary">{set.weight} kg</span>
-                            <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                          </div>
-                        </div>
-                      </button>
-                       <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="absolute right-12 text-muted-foreground hover:text-primary transition-all opacity-0 group-hover/setitem:opacity-100 md:opacity-100"
-                          onClick={() => handleReLogSet(set)}
-                          aria-label="Re-log set"
-                        >
-                          <Copy className="w-5 h-5" />
-                        </Button>
-                    </div>
+                    <SwipeableSetRow
+                      key={set.id}
+                      set={set}
+                      setIndexInDay={setIndex}
+                      totalSetsInDay={setsInDay.length}
+                      onEdit={handleEditSet}
+                      onReLog={handleReLogSet}
+                    />
                   ))}
                 </div>
               </div>
