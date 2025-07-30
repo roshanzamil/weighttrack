@@ -48,10 +48,11 @@ export function useWorkouts() {
     setWorkouts(prevWorkouts => [workoutWithMetadata, ...prevWorkouts]);
   }, []);
 
-  const addFolder = useCallback((name: string) => {
+  const addFolder = useCallback((name: string, description: string) => {
     const newFolder: Folder = {
       id: new Date().toISOString() + Math.random(),
       name,
+      description,
       exercises: [],
     };
     setFolders(prev => [...prev, newFolder]);

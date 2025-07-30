@@ -17,5 +17,6 @@ export interface Exercise {
 export interface Folder {
     id: string;
     name: string;
+    description: string;
     exercises: Exercise[];
 }

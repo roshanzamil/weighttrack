@@ -16,6 +16,7 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogClose,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Accordion,
@@ -37,6 +38,8 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 
 function MainContent() {
@@ -57,6 +60,7 @@ function MainContent() {
 
 
   const [newFolderName, setNewFolderName] = useState("");
+  const [newFolderDescription, setNewFolderDescription] = useState("");
   const [newExerciseName, setNewExerciseName] = useState("");
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [selectedExerciseForLogging, setSelectedExerciseForLogging] = useState<string | null>(null);
@@ -64,6 +68,15 @@ function MainContent() {
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
 
   const exercises = getAllExercises();
+
+  const handleAddFolder = () => {
+    if (newFolderName.trim()) {
+        addFolder(newFolderName.trim(), newFolderDescription.trim());
+        setNewFolderName("");
+        setNewFolderDescription("");
+        toast({ title: "Folder created!" });
+    }
+  }
 
   const handleAddExercise = () => {
     if (newExerciseName.trim() && selectedFolderId) {
@@ -95,10 +108,37 @@ function MainContent() {
       </header>
       <main className="flex-1 overflow-y-auto p-4 space-y-6">
         <div className="space-y-2">
-            <button className="w-full text-left p-2 rounded-md hover:bg-accent flex items-center gap-3 text-primary">
-                <Plus className="w-5 h-5"/>
-                <span className="font-semibold">New Workout...</span>
-            </button>
+            <Dialog>
+                <DialogTrigger asChild>
+                    <button className="w-full text-left p-2 rounded-md hover:bg-accent flex items-center gap-3 text-primary">
+                        <Plus className="w-5 h-5"/>
+                        <span className="font-semibold">New Workout...</span>
+                    </button>
+                </DialogTrigger>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Create a new workout folder</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="folder-name">Name</Label>
+                            <Input id="folder-name" placeholder="e.g. Upper Body" value={newFolderName} onChange={(e) => setNewFolderName(e.target.value)} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="folder-description">Description</Label>
+                            <Textarea id="folder-description" placeholder="A short description of this workout plan." value={newFolderDescription} onChange={(e) => setNewFolderDescription(e.target.value)} />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <DialogClose asChild>
+                            <Button variant="outline">Cancel</Button>
+                        </DialogClose>
+                        <DialogClose asChild>
+                            <Button onClick={handleAddFolder} disabled={!newFolderName.trim()}>Create Folder</Button>
+                        </DialogClose>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
             <button className="w-full text-left p-2 rounded-md hover:bg-accent flex items-center gap-3 text-primary">
                 <Sparkles className="w-5 h-5"/>
                 <span className="font-semibold">New Custom Plan...</span>
