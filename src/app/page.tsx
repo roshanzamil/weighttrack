@@ -8,7 +8,6 @@ import { WorkoutLogger } from "@/components/workout-logger";
 import {
   Settings,
   Plus,
-  Sparkles,
   Library,
   BookOpen,
   ChevronRight,
@@ -18,9 +17,7 @@ import {
   ArrowLeft,
   Trash2,
   MoreVertical,
-  AlertCircle,
   TrendingUp,
-  X,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -50,23 +47,11 @@ import {
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { type NewWorkoutSet, type Exercise, type Folder, type WorkoutSet } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarProvider,
-  SidebarInset,
-  useSidebar,
-} from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { format, formatDistanceToNowStrict, parseISO } from "date-fns";
 import { ProgressChart } from "@/components/progress-chart";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarIcon } from "lucide-react";
@@ -78,7 +63,7 @@ const popularExercises = [
   "Pull Up", "Dumbbell Curl", "Tricep Extension", "Leg Press", "Lat Pulldown"
 ];
 
-function EditSetDialog({ set, isOpen, onOpenChange, onUpdateSet, onDeleteSet, allExercises }) {
+function EditSetDialog({ set, isOpen, onOpenChange, onUpdateSet, onDeleteSet }) {
     if (!set) return null;
 
     const [editedWeight, setEditedWeight] = useState(set.weight);
@@ -175,7 +160,6 @@ function ExerciseDetailView({
   sets,
   onUpdateSet,
   onDeleteSet,
-  allExercises
 }) {
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
   const [isLoggingOpen, setIsLoggingOpen] = useState(false);
@@ -308,14 +292,13 @@ function ExerciseDetailView({
           onOpenChange={() => setEditingSet(null)}
           onUpdateSet={onUpdateSet}
           onDeleteSet={onDeleteSet}
-          allExercises={allExercises}
       />
     </div>
   );
 }
 
 
-function FolderView({ folder, onBack, onAddExercise, onDeleteFolder, onLogSet, onDeleteExercise, onSelectExercise, getLatestWorkout }) {
+function FolderView({ folder, onBack, onAddExercise, onDeleteFolder, onSelectExercise, getLatestWorkout }) {
   const [isAddExerciseOpen, setIsAddExerciseOpen] = useState(false);
   const [newExerciseName, setNewExerciseName] = useState("");
   const [selectedPopularExercise, setSelectedPopularExercise] = useState("");
@@ -433,7 +416,6 @@ function FolderView({ folder, onBack, onAddExercise, onDeleteFolder, onLogSet, o
 
 function MainContent() {
   const {
-    workouts,
     addWorkout,
     updateWorkoutSet,
     deleteWorkoutSet,
@@ -447,7 +429,7 @@ function MainContent() {
     getAllExercises
   } = useWorkouts();
   const { toast } = useToast();
-  const { isMobile, setOpenMobile, openMobile } = useSidebar();
+  const isMobile = useIsMobile();
 
 
   const [newFolderName, setNewFolderName] = useState("");
@@ -456,7 +438,7 @@ function MainContent() {
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
 
-  const allExercises = folders.flatMap(f => f.exercises);
+  const allExercises = getAllExercises();
   const selectedFolder = folders.find(f => f.id === selectedFolderId);
 
   const handleAddFolder = () => {
@@ -525,7 +507,6 @@ function MainContent() {
       onDeleteSet={handleDeleteSet}
       onDeleteExercise={handleDeleteExercise}
       sets={getHistoryForExercise(selectedExercise.id)}
-      allExercises={getAllExercises()}
       />
   }
 
@@ -538,8 +519,6 @@ function MainContent() {
       }}
       onAddExercise={addExerciseToFolder}
       onDeleteFolder={handleDeleteFolder}
-      onLogSet={handleLogSet}
-      onDeleteExercise={handleDeleteExercise}
       onSelectExercise={handleSelectExercise}
       getLatestWorkout={getLatestWorkout}
       />
@@ -550,7 +529,7 @@ function MainContent() {
       <header className="flex items-center justify-between p-4 border-b">
         <div className="flex items-center gap-4">
           {isMobile && (
-             <Button variant="ghost" size="icon" onClick={() => setOpenMobile(!openMobile)}>
+             <Button variant="ghost" size="icon">
               <Settings className="w-6 h-6" />
             </Button>
           )}
@@ -590,10 +569,6 @@ function MainContent() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-            <button className="w-full text-left p-2 rounded-md hover:bg-accent flex items-center gap-3 text-primary">
-                <Sparkles className="w-5 h-5"/>
-                <span className="font-semibold">New Custom Plan...</span>
-            </button>
         </div>
 
         <div className="space-y-1">
@@ -674,34 +649,9 @@ function MainContent() {
 
 
 export default function Home() {
-  const {
-    workouts,
-    folders,
-  } = useWorkouts();
   return (
-    <SidebarProvider>
-      <Sidebar side="left" collapsible="offcanvas">
-        <SidebarContent className="p-0">
-          <SidebarHeader className="p-4 border-b">
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon">
-                <Settings className="w-6 h-6" />
-              </Button>
-            </div>
-          </SidebarHeader>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton tooltip="My Workouts" isActive>My Workouts</SidebarMenuButton>
-            </SidebarMenuItem>
-             <SidebarMenuItem>
-              <SidebarMenuButton tooltip="Progress">Progress</SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarContent>
-      </Sidebar>
-      <SidebarInset>
-        <MainContent />
-      </SidebarInset>
-    </SidebarProvider>
+    <MainContent />
   )
 }
+
+    
