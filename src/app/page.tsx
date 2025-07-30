@@ -3,12 +3,10 @@
 
 import { useState } from "react";
 import { useWorkouts } from "@/hooks/use-workouts";
-import { Logo } from "@/components/logo";
 import { WorkoutLogger } from "@/components/workout-logger";
-import { WorkoutHistory } from "@/components/workout-history";
 import { ProgressTracker } from "@/components/progress-tracker";
-import { FolderPlus, Dumbbell, Plus, Trash2, Edit } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Settings, Plus, Sparkles, Library, BookOpen, ChevronRight, ChevronDown, Dumbbell, Timer, Calendar } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -27,9 +25,21 @@ import {
 } from "@/components/ui/accordion";
 import { type NewWorkoutSet } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarProvider,
+  SidebarInset,
+  useSidebar,
+} from "@/components/ui/sidebar";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 
-export default function Home() {
+function MainContent() {
   const {
     workouts,
     addWorkout,
@@ -43,23 +53,17 @@ export default function Home() {
     deleteFolder,
   } = useWorkouts();
   const { toast } = useToast();
+  const { isMobile, setOpenMobile, openMobile } = useSidebar();
+
 
   const [newFolderName, setNewFolderName] = useState("");
   const [newExerciseName, setNewExerciseName] = useState("");
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
-  const [activeView, setActiveView] = useState('folders'); // 'folders' or 'dashboard'
   const [selectedExerciseForLogging, setSelectedExerciseForLogging] = useState<string | null>(null);
-
+  const [activeView, setActiveView] = useState<'workouts' | 'exercises' | 'folder'>('workouts');
+  const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
 
   const exercises = getAllExercises();
-
-  const handleAddFolder = () => {
-    if (newFolderName.trim()) {
-      addFolder(newFolderName.trim());
-      setNewFolderName("");
-      toast({ title: "Folder created!" });
-    }
-  };
 
   const handleAddExercise = () => {
     if (newExerciseName.trim() && selectedFolderId) {
@@ -77,140 +81,133 @@ export default function Home() {
     });
   };
 
-  if (activeView === 'dashboard') {
-    return (
-      <div className="min-h-screen bg-background text-foreground">
-         <Button onClick={() => setActiveView('folders')} variant="outline" className="m-4">Back to Folders</Button>
-        <main className="container mx-auto px-4 py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-1 flex flex-col gap-8">
-              <WorkoutHistory workouts={workouts} />
-            </div>
-            <div className="lg:col-span-2">
-              <ProgressTracker
-                  exercises={exercises}
-                  getHistoryForExercise={getHistoryForExercise}
-                  getPersonalBest={getPersonalBest}
-                  getLatestWorkout={getLatestWorkout}
-                />
-            </div>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <main className="container mx-auto px-4 py-8">
-        <header className="flex flex-col items-center text-center mb-12">
-          <Logo />
-          <h1 className="text-4xl md:text-5xl font-bold text-primary mt-4 tracking-tighter">
-            Overload Pro
-          </h1>
-          <p className="mt-2 text-lg text-muted-foreground max-w-2xl">
-            Create folders to organize your exercises, then log your sets and track your progress.
-          </p>
-        </header>
+    <div className="flex flex-col h-full">
+      <header className="flex items-center justify-between p-4 border-b">
+        <div className="flex items-center gap-4">
+          {isMobile && (
+             <Button variant="ghost" size="icon" onClick={() => setOpenMobile(!openMobile)}>
+              <Settings className="w-6 h-6" />
+            </Button>
+          )}
+          <h1 className="text-2xl font-bold">My Workouts</h1>
+        </div>
+      </header>
+      <main className="flex-1 overflow-y-auto p-4 space-y-6">
+        <div className="space-y-2">
+            <button className="w-full text-left p-2 rounded-md hover:bg-accent flex items-center gap-3 text-primary">
+                <Plus className="w-5 h-5"/>
+                <span className="font-semibold">New Workout...</span>
+            </button>
+            <button className="w-full text-left p-2 rounded-md hover:bg-accent flex items-center gap-3 text-primary">
+                <Sparkles className="w-5 h-5"/>
+                <span className="font-semibold">New Custom Plan...</span>
+            </button>
+        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="md:col-span-1">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FolderPlus /> Create Folder
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex gap-2">
-                  <Input
-                    value={newFolderName}
-                    onChange={(e) => setNewFolderName(e.target.value)}
-                    placeholder="e.g. Push Day"
-                  />
-                  <Button onClick={handleAddFolder}>Create</Button>
+        <div className="space-y-1">
+             <button className="w-full text-left p-2 rounded-md hover:bg-accent flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <Library className="w-5 h-5"/>
+                    <span>My Exercises</span>
                 </div>
-              </CardContent>
-            </Card>
-             <Button onClick={() => setActiveView('dashboard')} className="mt-4 w-full">View Progress Dashboard</Button>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                    <span>{exercises.length}</span>
+                    <ChevronRight className="w-5 h-5"/>
+                </div>
+            </button>
+            {folders.map(folder => (
+                 <button key={folder.id} className="w-full text-left p-2 rounded-md hover:bg-accent flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <BookOpen className="w-5 h-5"/>
+                        <span>{folder.name}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                        <span>{folder.exercises.length}</span>
+                        <ChevronRight className="w-5 h-5"/>
+                    </div>
+                </button>
+            ))}
+        </div>
 
-          </div>
-          <div className="md:col-span-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>My Exercise Folders</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {folders.length === 0 ? (
-                   <p className="text-muted-foreground text-center py-8">No folders yet. Create one to get started!</p>
-                ) : (
-                <Accordion type="single" collapsible className="w-full">
-                  {folders.map(folder => (
-                    <AccordionItem value={folder.id} key={folder.id}>
-                      <AccordionTrigger className="text-lg font-semibold">
-                        <div className="flex items-center justify-between w-full pr-4">
-                            {folder.name}
-                            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={(e) => {e.stopPropagation(); deleteFolder(folder.id)}}>
-                                <Trash2 className="w-4 h-4"/>
-                            </Button>
+        <div>
+            <Accordion type="single" collapsible defaultValue="item-1">
+                <AccordionItem value="item-1" className="border-none">
+                    <AccordionTrigger>
+                        <h2 className="text-xl font-semibold">Workout Templates</h2>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <Card className="bg-card">
+                                <CardHeader>
+                                    <CardTitle>Grow Your Upper Body</CardTitle>
+                                    <CardDescription>Incline Bench Press, Seated Cable Row, Du...</CardDescription>
+                                </CardHeader>
+                            </Card>
+                             <Card className="bg-card">
+                                <CardHeader>
+                                    <CardTitle>Burn Fat & Boost Endurance</CardTitle>
+                                    <CardDescription>Goblet Squat, Kettlebell Swing, Dumbbell Pus...</CardDescription>
+                                </CardHeader>
+                            </Card>
                         </div>
-                      </AccordionTrigger>
-                      <AccordionContent>
-                        {folder.exercises.length > 0 &&
-                          <ul className="space-y-2 mb-4">
-                            {folder.exercises.map(exercise => (
-                              <li key={exercise.id} className="flex justify-between items-center p-2 rounded-md bg-secondary">
-                                <span>{exercise.name}</span>
-                                <Dialog>
-                                  <DialogTrigger asChild>
-                                    <Button size="sm" onClick={() => setSelectedExerciseForLogging(exercise.name)}>Add Set</Button>
-                                  </DialogTrigger>
-                                  <DialogContent>
-                                    <DialogHeader>
-                                      <DialogTitle>Log Set for {selectedExerciseForLogging}</DialogTitle>
-                                    </DialogHeader>
-                                    <WorkoutLogger onAddWorkout={handleLogSet} exerciseName={selectedExerciseForLogging!} />
-                                  </DialogContent>
-                                </Dialog>
-                              </li>
-                            ))}
-                          </ul>
-                        }
-
-                        <Dialog onOpenChange={(isOpen) => { if (isOpen) setSelectedFolderId(folder.id)}}>
-                          <DialogTrigger asChild>
-                            <Button variant="outline" size="sm">
-                              <Plus className="mr-2 h-4 w-4" /> Add Exercise
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Add Exercise to {folder.name}</DialogTitle>
-                            </DialogHeader>
-                            <div className="flex gap-2 mt-4">
-                              <Input
-                                value={newExerciseName}
-                                onChange={(e) => setNewExerciseName(e.target.value)}
-                                placeholder="e.g. Bench Press"
-                              />
-                              <DialogClose asChild>
-                                <Button onClick={handleAddExercise}>Add</Button>
-                              </DialogClose>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
-                      </AccordionContent>
-                    </AccordionItem>
-                  ))}
-                </Accordion>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+                    </AccordionContent>
+                </AccordionItem>
+            </Accordion>
         </div>
       </main>
+
+      {/* Bottom Nav for Mobile */}
+      {isMobile && (
+        <footer className="sticky bottom-0 left-0 right-0 bg-background border-t p-2 flex justify-around items-center">
+            <Button variant="ghost" className="flex flex-col h-auto items-center gap-1 text-primary">
+                <Dumbbell className="w-6 h-6"/>
+                <span className="text-xs">Sets</span>
+            </Button>
+            <Button variant="ghost" className="flex flex-col h-auto items-center gap-1 text-muted-foreground">
+                <Timer className="w-6 h-6"/>
+                <span className="text-xs">Sessions</span>
+            </Button>
+            <Button variant="ghost" className="flex flex-col h-auto items-center gap-1 text-muted-foreground">
+                <Calendar className="w-6 h-6"/>
+                <span className="text-xs">Today</span>
+            </Button>
+        </footer>
+       )}
     </div>
   );
 }
 
+
+export default function Home() {
+  const {
+    workouts,
+    folders,
+  } = useWorkouts();
+  return (
+    <SidebarProvider>
+      <Sidebar side="left" collapsible="offcanvas">
+        <SidebarContent className="p-0">
+          <SidebarHeader className="p-4 border-b">
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="icon">
+                <Settings className="w-6 h-6" />
+              </Button>
+            </div>
+          </SidebarHeader>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton tooltip="My Workouts" isActive>My Workouts</SidebarMenuButton>
+            </SidebarMenuItem>
+             <SidebarMenuItem>
+              <SidebarMenuButton tooltip="Progress">Progress</SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarContent>
+      </Sidebar>
+      <SidebarInset>
+        <MainContent />
+      </SidebarInset>
+    </SidebarProvider>
+  )
+}
