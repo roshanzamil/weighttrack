@@ -90,7 +90,7 @@ export function useWorkouts(user: User | null) {
 
 
   const updateWorkoutSet = useCallback(async (updatedSet: WorkoutSet) => {
-    const { user_id, exerciseName, ...restOfSet } = updatedSet; // user_id is not mutable
+    const { user_id, exerciseName, ...restOfSet } = updatedSet;
     const { data, error } = await supabase
       .from('workout_sets')
       .update(restOfSet)

@@ -131,7 +131,7 @@ function EditSetDialog({ set, isOpen, onOpenChange, onUpdateSet, onDeleteSet, ex
                                     {format(editedDate, "PPP")}
                                 </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0">
+                            <PopoverContent className="w-auto p-0" align="start">
                                 <CalendarPicker
                                     mode="single"
                                     selected={editedDate}
@@ -728,7 +728,3 @@ export default function Home() {
 
     return <MainContent user={user} />;
 }
-
-    
-
-    
