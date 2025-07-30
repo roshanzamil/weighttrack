@@ -17,6 +17,8 @@ import {
   ArrowLeft,
   Trash2,
   MoreVertical,
+  AlertCircle,
+  TrendingUp,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -44,7 +46,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { type NewWorkoutSet } from "@/lib/types";
+import { type NewWorkoutSet, type Exercise, type Folder, type WorkoutSet } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import {
   Sidebar,
@@ -60,13 +62,173 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { format, formatDistanceToNowStrict, parseISO } from "date-fns";
+import { ProgressChart } from "@/components/progress-chart";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const popularExercises = [
   "Bench Press", "Squat", "Deadlift", "Overhead Press", "Barbell Row",
   "Pull Up", "Dumbbell Curl", "Tricep Extension", "Leg Press", "Lat Pulldown"
 ];
 
-function FolderView({ folder, onBack, onAddExercise, onDeleteFolder, onLogSet }) {
+function ExerciseDetailView({
+  folder,
+  exercise,
+  onBack,
+  onLogSet,
+  onDeleteExercise,
+  sets,
+}) {
+  const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
+  const [isLoggingOpen, setIsLoggingOpen] = useState(false);
+
+  const groupedSets = sets.reduce((acc, set) => {
+    const date = format(parseISO(set.date), "eeee, dd MMM yyyy");
+    if (!acc[date]) {
+      acc[date] = [];
+    }
+    acc[date].push(set);
+    return acc;
+  }, {});
+
+  const timeDiff = (date1, date2) => {
+    if (!date2) return null;
+    return formatDistanceToNowStrict(parseISO(date1), {
+      addSuffix: false,
+      unit: 'minute'
+    });
+  }
+
+  const handleRepeatSet = (set: WorkoutSet) => {
+     onLogSet({
+      exerciseId: set.exerciseId,
+      exerciseName: set.exerciseName,
+      weight: set.weight,
+      reps: set.reps
+    });
+    toast({
+      title: "Set Repeated!",
+      description: `Logged ${set.weight}kg for ${set.reps} reps.`
+    })
+  }
+
+  return (
+    <div className="flex flex-col h-full bg-background">
+      <header className="flex items-center justify-between p-4 border-b sticky top-0 bg-background z-10">
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={onBack}>
+            <ArrowLeft className="w-6 h-6" />
+          </Button>
+          <div>
+            <div className="text-sm text-primary">{folder.name}</div>
+            <h1 className="text-xl font-bold">{exercise.name}</h1>
+          </div>
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <MoreVertical className="w-5 h-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onSelect={() => onDeleteExercise(folder.id, exercise.id)} className="text-destructive">
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete Exercise
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </header>
+
+      <main className="flex-1 overflow-y-auto">
+        <div className="p-4 space-y-4">
+          <Button variant="outline" className="w-full justify-start" onClick={() => setIsAnalyticsOpen(true)}>
+            <TrendingUp className="mr-2" /> Analytics
+          </Button>
+           <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Repeat Sets Instantly</AlertTitle>
+              <AlertDescription>
+                Tap and hold a set to quickly record it again.
+              </AlertDescription>
+            </Alert>
+        </div>
+
+        <ScrollArea className="h-[calc(100vh-280px)]">
+           <div className="p-4 space-y-6">
+            {Object.keys(groupedSets).length > 0 ? Object.entries(groupedSets).map(([date, setsInDay], dayIndex) => (
+              <div key={date}>
+                <h3 className="text-sm font-semibold text-muted-foreground mb-2 px-1">{date.toUpperCase()}</h3>
+                <div className="space-y-1">
+                  {setsInDay.map((set, setIndex) => (
+                    <button 
+                      key={set.id} 
+                      className="w-full text-left p-3 rounded-lg bg-card hover:bg-accent transition-colors"
+                      onClick={() => handleRepeatSet(set)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <span className="font-mono text-sm text-muted-foreground">{setsInDay.length - setIndex}</span>
+                          <div className="text-sm">
+                            {format(parseISO(set.date), 'p')}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <span className="font-semibold">{set.reps} rep</span>
+                          <span className="font-semibold text-primary">{set.weight} kg</span>
+                          <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )) : (
+              <div className="text-center text-muted-foreground py-12">
+                <p>No sets logged for this exercise yet.</p>
+                <p>Tap the '+' button to get started!</p>
+              </div>
+            )}
+           </div>
+        </ScrollArea>
+      </main>
+      
+      <footer className="p-4 border-t sticky bottom-0 bg-background z-10">
+         <Dialog open={isLoggingOpen} onOpenChange={setIsLoggingOpen}>
+          <DialogTrigger asChild>
+            <Button size="lg" className="rounded-full w-16 h-16 absolute bottom-20 right-6 shadow-lg">
+              <Plus className="w-8 h-8"/>
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Log Set: {exercise.name}</DialogTitle></DialogHeader>
+            <WorkoutLogger 
+              onAddWorkout={onLogSet}
+              exerciseName={exercise.name}
+              exerciseId={exercise.id}
+              inDialog={true}
+            />
+          </DialogContent>
+        </Dialog>
+      </footer>
+
+      {/* Analytics Dialog */}
+      <Dialog open={isAnalyticsOpen} onOpenChange={setIsAnalyticsOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Analytics: {exercise.name}</DialogTitle>
+          </DialogHeader>
+          <div className="h-[400px] w-full">
+            <ProgressChart data={sets} />
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+
+function FolderView({ folder, onBack, onAddExercise, onDeleteFolder, onLogSet, onDeleteExercise, onSelectExercise }) {
   const [isAddExerciseOpen, setIsAddExerciseOpen] = useState(false);
   const [newExerciseName, setNewExerciseName] = useState("");
   const [selectedPopularExercise, setSelectedPopularExercise] = useState("");
@@ -158,12 +320,12 @@ function FolderView({ folder, onBack, onAddExercise, onDeleteFolder, onLogSet })
         ) : (
           <div className="space-y-3">
             {folder.exercises.map(exercise => (
-              <Card key={exercise.id} className="bg-card">
+              <Card key={exercise.id} className="bg-card hover:bg-accent/50 cursor-pointer" onClick={() => onSelectExercise(exercise)}>
                 <CardHeader className="flex flex-row items-center justify-between pb-4">
                   <CardTitle className="text-lg">{exercise.name}</CardTitle>
                    <Dialog>
                         <DialogTrigger asChild>
-                           <Button size="sm">
+                           <Button size="sm" onClick={(e) => e.stopPropagation()}>
                                 <Plus className="w-4 h-4 mr-2" /> Add Set
                            </Button>
                         </DialogTrigger>
@@ -176,6 +338,8 @@ function FolderView({ folder, onBack, onAddExercise, onDeleteFolder, onLogSet })
                                     onLogSet(workout);
                                 }}
                                 exerciseName={exercise.name}
+                                exerciseId={exercise.id}
+                                inDialog={true}
                             />
                         </DialogContent>
                     </Dialog>
@@ -194,13 +358,11 @@ function MainContent() {
     workouts,
     addWorkout,
     getHistoryForExercise,
-    getPersonalBest,
-    getAllExercises,
-    getLatestWorkout,
     folders,
     addFolder,
     addExerciseToFolder,
     deleteFolder,
+    deleteExerciseFromFolder,
   } = useWorkouts();
   const { toast } = useToast();
   const { isMobile, setOpenMobile, openMobile } = useSidebar();
@@ -208,10 +370,11 @@ function MainContent() {
 
   const [newFolderName, setNewFolderName] = useState("");
   const [newFolderDescription, setNewFolderDescription] = useState("");
-  const [activeView, setActiveView] = useState<'workouts' | 'folder'>('workouts');
+  const [activeView, setActiveView] = useState<'workouts' | 'folder' | 'exercise'>('workouts');
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
 
-  const exercises = getAllExercises();
+  const allExercises = folders.flatMap(f => f.exercises);
   const selectedFolder = folders.find(f => f.id === selectedFolderId);
 
   const handleAddFolder = () => {
@@ -230,6 +393,13 @@ function MainContent() {
     setSelectedFolderId(null);
   };
 
+  const handleDeleteExercise = (folderId: string, exerciseId: string) => {
+    deleteExerciseFromFolder(folderId, exerciseId);
+    toast({ title: "Exercise deleted."});
+    setActiveView('folder');
+    setSelectedExercise(null);
+  }
+
   const handleLogSet = (workout: NewWorkoutSet) => {
     addWorkout(workout);
     toast({
@@ -238,13 +408,37 @@ function MainContent() {
     });
   };
 
+  const handleSelectExercise = (exercise: Exercise) => {
+    setSelectedExercise(exercise);
+    setActiveView('exercise');
+  }
+
+  if (activeView === 'exercise' && selectedFolder && selectedExercise) {
+    return <ExerciseDetailView
+      folder={selectedFolder}
+      exercise={selectedExercise}
+      onBack={() => {
+        setActiveView('folder');
+        setSelectedExercise(null);
+      }}
+      onLogSet={handleLogSet}
+      onDeleteExercise={handleDeleteExercise}
+      sets={getHistoryForExercise(selectedExercise.id)}
+      />
+  }
+
   if (activeView === 'folder' && selectedFolder) {
     return <FolderView
       folder={selectedFolder}
-      onBack={() => setActiveView('workouts')}
+      onBack={() => {
+        setActiveView('workouts');
+        setSelectedFolderId(null);
+      }}
       onAddExercise={addExerciseToFolder}
       onDeleteFolder={handleDeleteFolder}
       onLogSet={handleLogSet}
+      onDeleteExercise={handleDeleteExercise}
+      onSelectExercise={handleSelectExercise}
       />
   }
 
@@ -306,7 +500,7 @@ function MainContent() {
                     <span>My Exercises</span>
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
-                    <span>{exercises.length}</span>
+                    <span>{allExercises.length}</span>
                     <ChevronRight className="w-5 h-5"/>
                 </div>
             </button>

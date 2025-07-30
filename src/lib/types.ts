@@ -1,6 +1,7 @@
 
 export interface WorkoutSet {
   id: string;
+  exerciseId: string; // Added to link set to a specific exercise
   exerciseName: string;
   weight: number;
   reps: number;

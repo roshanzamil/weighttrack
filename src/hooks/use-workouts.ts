@@ -78,27 +78,40 @@ export function useWorkouts() {
       return folder;
     }));
   }, []);
+  
+  const deleteExerciseFromFolder = useCallback((folderId: string, exerciseId: string) => {
+    setFolders(prev => prev.map(folder => {
+      if (folder.id === folderId) {
+        // also delete workouts associated with this exercise
+        setWorkouts(w => w.filter(workout => workout.exerciseId !== exerciseId));
+        return { ...folder, exercises: folder.exercises.filter(ex => ex.id !== exerciseId) };
+      }
+      return folder;
+    }));
+  }, []);
+
 
   const getAllExercises = useCallback(() => {
-    const exerciseNames = new Set(workouts.map(w => w.exerciseName));
-    return Array.from(exerciseNames);
-  }, [workouts]);
+    const allExercises = folders.flatMap(f => f.exercises);
+    const uniqueExerciseNames = new Set(allExercises.map(e => e.name));
+    return Array.from(uniqueExerciseNames);
+  }, [folders]);
 
-  const getHistoryForExercise = useCallback((exerciseName: string) => {
+  const getHistoryForExercise = useCallback((exerciseId: string) => {
     return workouts
-      .filter(w => w.exerciseName === exerciseName)
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      .filter(w => w.exerciseId === exerciseId)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [workouts]);
 
-  const getPersonalBest = useCallback((exerciseName: string) => {
-    const exerciseHistory = getHistoryForExercise(exerciseName);
+  const getPersonalBest = useCallback((exerciseId: string) => {
+    const exerciseHistory = getHistoryForExercise(exerciseId);
     if (exerciseHistory.length === 0) return null;
     return exerciseHistory.reduce((pb, current) => current.weight > pb.weight ? current : pb);
   }, [getHistoryForExercise]);
 
-  const getLatestWorkout = useCallback((exerciseName: string) => {
-    const exerciseHistory = getHistoryForExercise(exerciseName);
-    return exerciseHistory.length > 0 ? exerciseHistory[exerciseHistory.length - 1] : null;
+  const getLatestWorkout = useCallback((exerciseId: string) => {
+    const exerciseHistory = getHistoryForExercise(exerciseId);
+    return exerciseHistory.length > 0 ? exerciseHistory[0] : null;
   }, [getHistoryForExercise]);
   
   return useMemo(() => ({
@@ -112,5 +125,6 @@ export function useWorkouts() {
     addFolder,
     deleteFolder,
     addExerciseToFolder,
-  }), [workouts, addWorkout, getAllExercises, getHistoryForExercise, getPersonalBest, getLatestWorkout, folders, addFolder, deleteFolder, addExerciseToFolder]);
+    deleteExerciseFromFolder,
+  }), [workouts, addWorkout, getAllExercises, getHistoryForExercise, getPersonalBest, getLatestWorkout, folders, addFolder, deleteFolder, addExerciseToFolder, deleteExerciseFromFolder]);
 }
