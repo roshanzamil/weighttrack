@@ -157,13 +157,16 @@ function EditSetDialog({ set, isOpen, onOpenChange, onUpdateSet, onDeleteSet, ex
     )
 }
 
-function SwipeableSetRow({ set, setIndexInDay, totalSetsInDay, onEdit, onReLog }) {
+function SwipeableSetRow({ set, setIndexInDay, totalSetsInDay, onEdit, onReLog, onDelete }) {
     const [swipeX, setSwipeX] = useState(0);
 
     const handlers = useSwipeable({
         onSwiping: (event) => {
             if (event.dir === 'Right') {
                 const newX = Math.max(0, Math.min(80, event.deltaX));
+                setSwipeX(newX);
+            } else if (event.dir === 'Left') {
+                const newX = Math.min(0, Math.max(-80, event.deltaX));
                 setSwipeX(newX);
             }
         },
@@ -174,23 +177,36 @@ function SwipeableSetRow({ set, setIndexInDay, totalSetsInDay, onEdit, onReLog }
         onSwipedRight: () => {
             onReLog(set);
         },
+        onSwipedLeft: () => {
+            onDelete(set.id);
+        },
         trackMouse: true,
     });
 
     return (
-        <div {...handlers} className="relative overflow-hidden">
+        <div {...handlers} className="relative overflow-hidden bg-card rounded-lg">
+            {/* Right Swipe Action */}
             <div
                 className="absolute inset-y-0 left-0 flex items-center justify-center bg-primary text-primary-foreground px-6"
-                style={{ width: `${swipeX}px` }}
+                style={{ width: `${Math.max(0, swipeX)}px`, opacity: Math.max(0, swipeX) / 80 }}
             >
                 <Copy className="w-5 h-5" />
             </div>
+
+            {/* Left Swipe Action */}
+             <div
+                className="absolute inset-y-0 right-0 flex items-center justify-center bg-destructive text-destructive-foreground px-6"
+                style={{ width: `${Math.abs(Math.min(0, swipeX))}px`, opacity: Math.abs(Math.min(0, swipeX)) / 80 }}
+            >
+                <Trash2 className="w-5 h-5" />
+            </div>
+
             <div
                 className="relative bg-card transition-transform duration-200 ease-in-out"
                 style={{ transform: `translateX(${swipeX}px)` }}
             >
                 <button
-                    className="w-full text-left p-3 rounded-lg hover:bg-accent transition-colors"
+                    className="w-full text-left p-3 hover:bg-accent transition-colors"
                     onClick={() => onEdit(set)}
                 >
                     <div className="flex items-center justify-between">
@@ -254,6 +270,15 @@ function ExerciseDetailView({
     })
   }
 
+  const handleDeleteSetWithToast = (setId: string) => {
+    onDeleteSet(setId);
+    toast({
+      title: "Set Deleted",
+      description: "The set has been removed from your history.",
+      variant: "destructive"
+    });
+  };
+
   const sessionDates = Object.keys(groupedSets).sort((a,b) => new Date(b).getTime() - new Date(a).getTime());
   const latestSession = sessionDates[0] ? groupedSets[sessionDates[0]] : [];
   const previousSession = sessionDates[1] ? groupedSets[sessionDates[1]] : [];
@@ -305,6 +330,7 @@ function ExerciseDetailView({
                       totalSetsInDay={setsInDay.length}
                       onEdit={handleEditSet}
                       onReLog={handleReLogSet}
+                      onDelete={handleDeleteSetWithToast}
                     />
                   ))}
                 </div>
