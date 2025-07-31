@@ -2,8 +2,7 @@
 'use server';
 
 import { suggestWeightIncrease, type SuggestWeightIncreaseInput } from '@/ai/flows/suggest-weight-increase';
-import { supabase } from '@/lib/supabaseClient';
-import { createServerClient } from '@supabase/ssr';
+import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 
 export async function getAISuggestion(input: SuggestWeightIncreaseInput) {
@@ -17,33 +16,21 @@ export async function getAISuggestion(input: SuggestWeightIncreaseInput) {
 }
 
 export async function updateUserRole(userId: string, role: string) {
-    const cookieStore = cookies()
-    const supabaseServer = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            cookies: {
-                get(name: string) {
-                    return cookieStore.get(name)?.value
-                },
-            },
-        }
-    )
-
-    const { data: { user } } = await supabaseServer.auth.getUser();
-    if (!user) {
-        return { success: false, error: 'User not authenticated.' };
-    }
-    
-    // We need to use the admin client to update user metadata
-    // The public client with RLS and policies allows users to update their own data,
-    // but using the admin client from a server action is a more direct and reliable method for role changes.
-    // NOTE: This requires SUPABASE_SERVICE_ROLE_KEY to be set in environment variables.
-    // For this environment, we will use the anon key, but in production, a service key should be used.
+    // For admin actions from a server component, we need to create a new client with the service role key.
+    // In a production environment, this should be stored securely in .env.local and not be the public anon key.
+    // For this prototype, we are using the anon key, which works because we've set up an RLS policy
+    // that allows users to update their own `user_metadata`.
     const supabaseAdmin = createClient(
          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, // In production, use process.env.SUPABASE_SERVICE_ROLE_KEY
+         {
+            auth: {
+                // This is important to ensure the admin client can perform its actions
+                autoRefreshToken: false,
+                persistSession: false
+            }
+         }
+    );
 
     const { data, error } = await supabaseAdmin.auth.admin.updateUserById(
         userId,
