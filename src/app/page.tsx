@@ -781,24 +781,12 @@ export default function Home() {
     const supabase = createClient();
 
     useEffect(() => {
-        const checkUser = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session?.user) {
-                setUser(session.user);
-            } else {
-                router.push('/login');
-            }
-            setLoading(false);
-        };
-
-        checkUser();
-
         const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-           if (session?.user) {
-                setUser(session.user);
-           } else {
-               router.push('/login');
+           setUser(session?.user ?? null);
+           if (!session?.user) {
+                router.push('/login');
            }
+           setLoading(false);
         });
 
         return () => {

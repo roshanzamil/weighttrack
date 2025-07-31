@@ -16,13 +16,10 @@ interface TrainerPageProps {
 
 export function TrainerPage({ user, onRoleChange }: TrainerPageProps) {
     const [loading, setLoading] = useState(false);
-    const [isOptimisticTrainer, setIsOptimisticTrainer] = useState(user.user_metadata?.role === 'trainer');
     const { toast } = useToast();
 
     const handleBecomeTrainer = async () => {
         setLoading(true);
-        setIsOptimisticTrainer(true);
-
         const result = await updateUserRole(user.id, 'trainer');
         
         if (result.success) {
@@ -37,12 +34,11 @@ export function TrainerPage({ user, onRoleChange }: TrainerPageProps) {
                 description: result.error || "Could not update your role. Please try again later.",
                 variant: 'destructive',
             })
-            setIsOptimisticTrainer(false);
         }
         setLoading(false);
     }
     
-    const isTrainer = user.user_metadata?.role === 'trainer' || isOptimisticTrainer;
+    const isTrainer = user.user_metadata?.role === 'trainer';
 
     return (
         <div className="flex flex-col h-full">
