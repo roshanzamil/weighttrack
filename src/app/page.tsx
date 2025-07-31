@@ -66,34 +66,36 @@ const popularExercises = [
     // Chest
     "Bench Press", "Incline Bench Press", "Decline Bench Press", "Dumbbell Press", "Incline Dumbbell Press",
     "Dumbbell Flyes", "Cable Crossover", "Push Up", "Dips", "Machine Chest Press", "Peck Deck", "Cable Fly", "Incline Dumbbell Flyes",
-    "Landmine Press", "Svend Press", "Chest Squeeze",
+    "Landmine Press", "Svend Press", "Chest Squeeze", "Dumbbell Pullover",
     // Back
     "Deadlift", "Barbell Row", "Bent Over Row", "T-Bar Row", "Pendlay Row", "Pull Up", "Chin Up",
     "Lat Pulldown", "Seated Cable Row", "Dumbbell Row", "Good Mornings", "Back Extension", "Single Arm Dumbbell Row", "Face Pull",
-    "Rack Pull", "Kroc Row", "Meadows Row", "Chest-Supported Row",
+    "Rack Pull", "Kroc Row", "Meadows Row", "Chest-Supported Row", "Inverted Row", "Hyperextension",
     // Legs
     "Squat", "Front Squat", "Leg Press", "Leg Extension", "Leg Curl", "Romanian Deadlift",
     "Bulgarian Split Squat", "Lunge", "Calf Raise", "Hip Thrust", "Hack Squat", "Goblet Squat", "Standing Calf Raise", "Seated Calf Raise",
-    "Box Squat", "Sissy Squat", "Nordic Hamstring Curl",
+    "Box Squat", "Sissy Squat", "Nordic Hamstring Curl", "Pistol Squat",
     // Shoulders
     "Overhead Press", "Arnold Press", "Dumbbell Lateral Raise", "Front Raise", "Reverse Pec-Deck",
     "Face Pull", "Upright Row", "Shrugs", "Military Press", "Seated Dumbbell Press", "Dumbbell Shoulder Press", "Cable Lateral Raise",
-    "Lu raises", "Y-Raises", "Bus Drivers",
+    "Lu raises", "Y-Raises", "Bus Drivers", "Viking Press",
     // Biceps
     "Barbell Curl", "Dumbbell Curl", "Hammer Curl", "Preacher Curl", "Concentration Curl", "Cable Curl", "Incline Dumbbell Curl", "Spider Curl",
-    "Zottman Curl", "Waiter Curl",
+    "Zottman Curl", "Waiter Curl", "Reverse Barbell Curl",
     // Triceps
     "Tricep Extension", "Skull Crusher", "Tricep Pushdown", "Close Grip Bench Press", "Overhead Tricep Extension", "Tricep Dips", "Rope Pushdown",
-    "JM Press", "Tate Press",
+    "JM Press", "Tate Press", "Diamond Push-up",
     // Abs
     "Crunch", "Leg Raise", "Plank", "Russian Twist", "Cable Crunch", "Ab Roller", "Hanging Leg Raise", "Side Plank", "Bicycle Crunch",
-    "Woodchopper", "Pallof Press",
+    "Woodchopper", "Pallof Press", "Dragon Flag",
     // Forearms
     "Wrist Curl", "Reverse Wrist Curl", "Farmer's Walk", "Plate Pinch", "Gripper",
     // Glutes
-    "Glute Bridge", "Cable Kickback", "Banded Side Walk", "Fire Hydrant",
+    "Glute Bridge", "Cable Kickback", "Banded Side Walk", "Fire Hydrant", "Hip Abduction",
     // Calves
     "Donkey Calf Raise", "Leg Press Calf Raise",
+    // Full Body / Compound
+    "Clean and Jerk", "Snatch", "Thruster", "Kettlebell Swing", "Burpee", "Turkish Get-Up"
 ];
 
 function EditSetDialog({ set, isOpen, onOpenChange, onUpdateSet, onDeleteSet, exerciseName }) {
@@ -148,7 +150,7 @@ function EditSetDialog({ set, isOpen, onOpenChange, onUpdateSet, onDeleteSet, ex
                     </div>
                     <div>
                         <Label htmlFor="date">Date</Label>
-                        <Input
+                         <Input
                             id="date"
                             type="date"
                             value={format(editedDate, 'yyyy-MM-dd')}
@@ -379,11 +381,10 @@ function ExerciseDetailView({
         </ScrollArea>
       </main>
       
-      <footer className="p-4 border-t sticky bottom-0 bg-background z-10">
-         <Dialog open={isLoggingOpen} onOpenChange={setIsLoggingOpen}>
+        <Dialog open={isLoggingOpen} onOpenChange={setIsLoggingOpen}>
           <DialogTrigger asChild>
-            <Button size="lg" className="rounded-full w-16 h-16 absolute bottom-20 right-6 shadow-lg">
-              <Plus className="w-8 h-8"/>
+            <Button size="default" className="rounded-full w-14 h-14 fixed bottom-20 right-6 shadow-lg z-20">
+              <Plus className="w-6 h-6"/>
             </Button>
           </DialogTrigger>
           <DialogContent>
@@ -396,7 +397,6 @@ function ExerciseDetailView({
             />
           </DialogContent>
         </Dialog>
-      </footer>
 
       {/* Analytics Dialog */}
       <Dialog open={isAnalyticsOpen} onOpenChange={setIsAnalyticsOpen}>
@@ -811,3 +811,5 @@ export default function Home() {
 
     return <MainContent user={user} />;
 }
+
+    
