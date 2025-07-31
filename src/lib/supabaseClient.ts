@@ -1,8 +1,12 @@
 
-import { createClient } from '@supabase/supabase-js'
-import { type Database } from './database.types'
+import { createBrowserClient } from '@supabase/ssr';
+import { type Database } from './database.types';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
+// This is a client-side only supabase client.
+// It is used for client-side authentication and data fetching.
+// Do not use this on the server.
+export const createClient = () =>
+  createBrowserClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )

@@ -35,11 +35,14 @@ export async function updateUserRole(userId: string, role: string) {
         return { success: false, error: 'User not authenticated.' };
     }
     
+    // Merge new role with existing metadata to prevent overwriting
+    const newMetadata = { 
+        ...user.user_metadata,
+        role: role 
+    };
+
     const { data, error } = await supabase.auth.updateUser({
-        data: { 
-            ...user.user_metadata,
-            role: role 
-        }
+        data: newMetadata
     });
 
     if (error) {

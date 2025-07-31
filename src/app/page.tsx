@@ -53,7 +53,7 @@ import { format, formatDistanceToNowStrict, parseISO } from "date-fns";
 import { ProgressChart } from "@/components/progress-chart";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { WorkoutComparison } from "@/components/workout-comparison";
-import { supabase } from "@/lib/supabaseClient";
+import { createClient } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { useSwipeable } from "react-swipeable";
@@ -157,7 +157,6 @@ function EditSetDialog({ set, isOpen, onOpenChange, onUpdateSet, onDeleteSet, ex
                             value={format(editedDate, 'yyyy-MM-dd')}
                             onChange={(e) => {
                                 const dateValue = e.target.value;
-                                // Add 'T00:00:00' to avoid timezone issues where it might select the previous day
                                 const date = new Date(dateValue + 'T00:00:00');
                                 if (!isNaN(date.getTime())) {
                                     setEditedDate(date);
@@ -195,7 +194,6 @@ function SwipeableSetRow({ set, setIndexInDay, totalSetsInDay, onEdit, onReLog, 
             }
         },
         onSwiped: () => {
-            // Snap back
             setSwipeX(0);
         },
         onSwipedRight: () => {
@@ -209,7 +207,6 @@ function SwipeableSetRow({ set, setIndexInDay, totalSetsInDay, onEdit, onReLog, 
 
     return (
         <div {...handlers} className="relative overflow-hidden bg-card rounded-lg">
-            {/* Right Swipe Action */}
             <div
                 className="absolute inset-y-0 left-0 flex items-center justify-center bg-primary text-primary-foreground px-6"
                 style={{ width: `${Math.max(0, swipeX)}px`, opacity: Math.max(0, swipeX) / 80 }}
@@ -217,7 +214,6 @@ function SwipeableSetRow({ set, setIndexInDay, totalSetsInDay, onEdit, onReLog, 
                 <Copy className="w-5 h-5" />
             </div>
 
-            {/* Left Swipe Action */}
              <div
                 className="absolute inset-y-0 right-0 flex items-center justify-center bg-destructive text-destructive-foreground px-6"
                 style={{ width: `${Math.abs(Math.min(0, swipeX))}px`, opacity: Math.abs(Math.min(0, swipeX)) / 80 }}
@@ -399,7 +395,6 @@ function ExerciseDetailView({
           </DialogContent>
         </Dialog>
 
-      {/* Analytics Dialog */}
       <Dialog open={isAnalyticsOpen} onOpenChange={setIsAnalyticsOpen}>
         <DialogContent className="max-w-3xl w-[95vw] h-[80vh] flex flex-col">
           <DialogHeader>
@@ -446,7 +441,6 @@ function ExerciseDetailView({
         </DialogContent>
       </Dialog>
       
-      {/* Edit Set Dialog */}
       <EditSetDialog
           set={editingSet}
           isOpen={!!editingSet}
@@ -753,10 +747,11 @@ function MainContent({user}: {user: User}) {
     const [activeTab, setActiveTab] = useState<NavItem>('workouts');
     const router = useRouter();
     const [currentUser, setCurrentUser] = useState(user);
+    const supabase = createClient();
 
     const handleSignOut = async () => {
         await supabase.auth.signOut();
-        router.push('/login');
+        router.refresh();
     }
 
     const refreshUser = async () => {
@@ -783,6 +778,7 @@ export default function Home() {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
+    const supabase = createClient();
 
     useEffect(() => {
         const checkUser = async () => {
@@ -797,20 +793,18 @@ export default function Home() {
 
         checkUser();
 
-        const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-            if (event === 'SIGNED_OUT') {
-                router.push('/login');
-            } else if (session?.user){
+        const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+           if (session?.user) {
                 setUser(session.user);
-            } else if (event === 'USER_UPDATED') {
-                setUser(session.user)
-            }
+           } else {
+               router.push('/login');
+           }
         });
 
         return () => {
             authListener.subscription.unsubscribe();
         };
-    }, [router]);
+    }, [router, supabase]);
 
     if (loading) {
         return <div className="flex items-center justify-center h-screen">Loading...</div>;
