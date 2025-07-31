@@ -3,26 +3,19 @@
 
 import { useState, useEffect } from "react";
 import { useWorkouts } from "@/hooks/use-workouts";
-import { WorkoutLogger } from "@/components/workout-logger";
 import {
-  Settings,
   Plus,
-  Library,
   BookOpen,
   ChevronRight,
-  Dumbbell,
-  Timer,
-  Calendar,
   ArrowLeft,
   Trash2,
   MoreVertical,
   TrendingUp,
   LogOut,
   Copy,
-  BarChart,
+  Weight,
   Target,
   Repeat,
-  Weight,
   Info,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -51,7 +44,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { type NewWorkoutSet, type Exercise, type Folder, type WorkoutSet } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
@@ -59,36 +51,35 @@ import { Textarea } from "@/components/ui/textarea";
 import { format, formatDistanceToNowStrict, parseISO } from "date-fns";
 import { ProgressChart } from "@/components/progress-chart";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar as CalendarIcon } from "lucide-react";
-import { Calendar as CalendarPicker } from "@/components/ui/calendar";
 import { WorkoutComparison } from "@/components/workout-comparison";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { useSwipeable } from "react-swipeable";
-import { cn } from "@/lib/utils";
+import { BottomNavBar, type NavItem } from "@/components/bottom-nav-bar";
+import { TrainerPage } from "@/components/trainer-page";
+import { ProfilePage } from "@/components/profile-page";
 
 
 const popularExercises = [
     // Chest
     "Bench Press", "Incline Bench Press", "Decline Bench Press", "Dumbbell Press", "Incline Dumbbell Press",
-    "Dumbbell Flyes", "Cable Crossover", "Push Up", "Dips", "Machine Chest Press", "Peck Deck",
+    "Dumbbell Flyes", "Cable Crossover", "Push Up", "Dips", "Machine Chest Press", "Peck Deck", "Cable Fly", "Incline Dumbbell Flyes",
     // Back
     "Deadlift", "Barbell Row", "Bent Over Row", "T-Bar Row", "Pendlay Row", "Pull Up", "Chin Up",
-    "Lat Pulldown", "Seated Cable Row", "Dumbbell Row", "Good Mornings", "Back Extension",
+    "Lat Pulldown", "Seated Cable Row", "Dumbbell Row", "Good Mornings", "Back Extension", "Single Arm Dumbbell Row", "Face Pull",
     // Legs
     "Squat", "Front Squat", "Leg Press", "Leg Extension", "Leg Curl", "Romanian Deadlift",
-    "Bulgarian Split Squat", "Lunge", "Calf Raise", "Hip Thrust", "Hack Squat", "Goblet Squat",
+    "Bulgarian Split Squat", "Lunge", "Calf Raise", "Hip Thrust", "Hack Squat", "Goblet Squat", "Standing Calf Raise", "Seated Calf Raise",
     // Shoulders
     "Overhead Press", "Arnold Press", "Dumbbell Lateral Raise", "Front Raise", "Reverse Pec-Deck",
-    "Face Pull", "Upright Row", "Shrugs", "Military Press", "Seated Dumbbell Press",
+    "Face Pull", "Upright Row", "Shrugs", "Military Press", "Seated Dumbbell Press", "Dumbbell Shoulder Press", "Cable Lateral Raise",
     // Biceps
-    "Barbell Curl", "Dumbbell Curl", "Hammer Curl", "Preacher Curl", "Concentration Curl", "Cable Curl", "Incline Dumbbell Curl",
+    "Barbell Curl", "Dumbbell Curl", "Hammer Curl", "Preacher Curl", "Concentration Curl", "Cable Curl", "Incline Dumbbell Curl", "Spider Curl",
     // Triceps
-    "Tricep Extension", "Skull Crusher", "Tricep Pushdown", "Close Grip Bench Press", "Overhead Tricep Extension", "Tricep Dips",
+    "Tricep Extension", "Skull Crusher", "Tricep Pushdown", "Close Grip Bench Press", "Overhead Tricep Extension", "Tricep Dips", "Rope Pushdown",
     // Abs
-    "Crunch", "Leg Raise", "Plank", "Russian Twist", "Cable Crunch", "Ab Roller", "Hanging Leg Raise"
+    "Crunch", "Leg Raise", "Plank", "Russian Twist", "Cable Crunch", "Ab Roller", "Hanging Leg Raise", "Side Plank", "Bicycle Crunch"
 ];
 
 function EditSetDialog({ set, isOpen, onOpenChange, onUpdateSet, onDeleteSet, exerciseName }) {
@@ -342,7 +333,7 @@ function ExerciseDetailView({
         </DropdownMenu>
       </header>
 
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto pb-24">
         
         <ScrollArea className="h-[calc(100vh-140px)]">
            <div className="p-4 space-y-6">
@@ -502,7 +493,7 @@ function FolderView({ folder, onBack, onAddExercise, onDeleteFolder, onSelectExe
           </DropdownMenuContent>
         </DropdownMenu>
       </header>
-      <main className="flex-1 overflow-y-auto p-4 space-y-4">
+      <main className="flex-1 overflow-y-auto p-4 space-y-4 pb-24">
         <Dialog open={isAddExerciseOpen} onOpenChange={setIsAddExerciseOpen}>
           <DialogTrigger asChild>
             <Button className="w-full">
@@ -570,7 +561,7 @@ function FolderView({ folder, onBack, onAddExercise, onDeleteFolder, onSelectExe
   );
 }
 
-function MainContent({user}: {user: User}) {
+function WorkoutsView({user, onSignOut}) {
   const {
     addWorkout,
     updateWorkoutSet,
@@ -584,8 +575,6 @@ function MainContent({user}: {user: User}) {
     deleteExerciseFromFolder,
   } = useWorkouts(user);
   const { toast } = useToast();
-  const router = useRouter();
-
 
   const [newFolderName, setNewFolderName] = useState("");
   const [newFolderNotes, setNewFolderNotes] = useState("");
@@ -648,11 +637,6 @@ function MainContent({user}: {user: User}) {
     setActiveView('exercise');
   }
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    router.push('/login');
-  }
-
   if (activeView === 'exercise' && selectedFolder && selectedExercise) {
     return <ExerciseDetailView
       folder={selectedFolder}
@@ -689,11 +673,8 @@ function MainContent({user}: {user: User}) {
         <div className="flex items-center gap-4">
           <h1 className="text-2xl font-bold">My Workouts</h1>
         </div>
-         <Button variant="ghost" size="icon" onClick={handleSignOut}>
-            <LogOut className="w-5 h-5" />
-        </Button>
       </header>
-      <main className="flex-1 overflow-y-auto p-4 space-y-6">
+      <main className="flex-1 overflow-y-auto p-4 space-y-6 pb-24">
         <div className="space-y-2">
             <Dialog>
                 <DialogTrigger asChild>
@@ -751,6 +732,27 @@ function MainContent({user}: {user: User}) {
       </main>
     </div>
   );
+}
+
+function MainContent({user}: {user: User}) {
+    const [activeTab, setActiveTab] = useState<NavItem>('workouts');
+    const router = useRouter();
+
+    const handleSignOut = async () => {
+        await supabase.auth.signOut();
+        router.push('/login');
+    }
+
+    return (
+        <div className="h-full flex flex-col">
+            <main className="flex-1 overflow-y-auto">
+                {activeTab === 'workouts' && <WorkoutsView user={user} onSignOut={handleSignOut} />}
+                {activeTab === 'trainer' && <TrainerPage />}
+                {activeTab === 'profile' && <ProfilePage user={user} onSignOut={handleSignOut} />}
+            </main>
+            <BottomNavBar activeTab={activeTab} onTabChange={setActiveTab} />
+        </div>
+    )
 }
 
 
