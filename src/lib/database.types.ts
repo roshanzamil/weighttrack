@@ -166,22 +166,7 @@ export type Database = {
             client_id?: string | null;
             status?: 'pending' | 'accepted' | 'rejected';
         };
-        Relationships: [
-            {
-                foreignKeyName: "invitations_trainer_id_fkey";
-                columns: ["trainer_id"];
-                isOneToOne: false;
-                referencedRelation: "users";
-                referencedColumns: ["id"];
-            },
-            {
-                foreignKeyName: "invitations_client_id_fkey";
-                columns: ["client_id"];
-                isOneToOne: false;
-                referencedRelation: "users";
-                referencedColumns: ["id"];
-            }
-        ];
+        Relationships: [];
       }
     }
     Views: {
@@ -278,3 +263,5 @@ export type Enums<
   : PublicEnumNameOrOptions extends keyof Database["public"]["Enums"]
     ? Database["public"]["Enums"][PublicEnumNameOrOptions]
     : never
+
+    
