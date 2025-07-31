@@ -1,21 +1,31 @@
 
 "use client"
 
-import { Bot, UserPlus, Sparkles, Building, Users, Send, Clock, UserCheck, Mail, Check, X } from "lucide-react"
+import { Bot, UserPlus, Sparkles, Building, Users, Send, Clock, UserCheck, Mail, Check, X, Trash2 } from "lucide-react"
 import { Button } from "./ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card"
 import { useCallback, useEffect, useState } from "react"
 import { updateUserRole } from "@/app/actions"
 import { useToast } from "@/hooks/use-toast"
 import type { User } from "@supabase/supabase-js"
-import { getClientsForTrainer, sendInvitation } from "@/app/invitations/actions"
+import { getClientsForTrainer, getTrainerForClient, removeClient, sendInvitation } from "@/app/invitations/actions"
 import type { Invitation } from "@/lib/types"
 import { Badge } from "./ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog"
 import { Label } from "./ui/label"
 import { Input } from "./ui/input"
 import { InvitationManager } from "./invitation-manager"
-
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 function InviteClientDialog({ onInviteSent }) {
     const [email, setEmail] = useState('');
@@ -98,6 +108,16 @@ function ClientManagement({ user }: { user: User }) {
         setLoading(false);
     }, [toast]);
 
+    const handleRemoveClient = async (invitationId: string) => {
+        const result = await removeClient(invitationId);
+        if (result.success) {
+            toast({title: "Client removed"});
+            fetchClients();
+        } else {
+            toast({title: "Error", description: result.error, variant: "destructive"});
+        }
+    }
+
 
     useEffect(() => {
         fetchClients();
@@ -133,11 +153,34 @@ function ClientManagement({ user }: { user: User }) {
                 </CardHeader>
                 <CardContent>
                      {loading ? <p>Loading...</p> : activeClients.length > 0 ? (
-                         <ul className="space-y-2">
+                         <ul className="space-y-3">
                            {activeClients.map(client => (
-                               <li key={client.id} className="flex items-center justify-between p-2 rounded-md bg-secondary">
-                                   <span>{client.client_details?.full_name || client.client_email}</span>
-                                   <Badge variant="default" className="bg-green-600">Accepted</Badge>
+                               <li key={client.id} className="flex items-center justify-between p-3 rounded-md bg-secondary">
+                                   <div>
+                                       <p className="font-semibold">{client.client_details?.full_name || client.client_email}</p>
+                                       <p className="text-sm text-muted-foreground">{client.client_details?.email}</p>
+                                   </div>
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                             <Button size="icon" variant="destructive">
+                                                <Trash2 className="w-4 h-4"/>
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    This will permanently remove {client.client_details?.full_name || client.client_email} from your client list. This action cannot be undone.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={() => handleRemoveClient(client.id)}>
+                                                    Remove Client
+                                                </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
                                </li>
                            ))}
                         </ul>
@@ -148,6 +191,47 @@ function ClientManagement({ user }: { user: User }) {
              <InviteClientDialog onInviteSent={fetchClients} />
         </div>
     )
+}
+
+function ClientView({ onRoleChange }) {
+    const [trainer, setTrainer] = useState<{full_name: string, email: string} | null>(null);
+    const [loading, setLoading] = useState(true);
+    const {toast} = useToast();
+
+    const fetchTrainer = useCallback(async () => {
+        const result = await getTrainerForClient();
+        if (result.success) {
+            setTrainer(result.data as any);
+        } else {
+            toast({title: 'Error', description: result.error, variant: 'destructive'});
+        }
+        setLoading(false);
+    }, [toast]);
+    
+    useEffect(() => {
+        fetchTrainer();
+    }, [fetchTrainer]);
+    
+    if (loading) return <p>Loading...</p>;
+    
+    return (
+         <>
+            {trainer ? (
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Your Trainer</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                         <p className="font-semibold text-lg">{trainer.full_name}</p>
+                         <p className="text-sm text-muted-foreground">{trainer.email}</p>
+                    </CardContent>
+                </Card>
+            ) : (
+                 <InvitationManager onAction={onRoleChange} />
+            )}
+        </>
+    )
+
 }
 
 
@@ -199,7 +283,7 @@ export function TrainerPage({ user, onRoleChange }: TrainerPageProps) {
                      <ClientManagement user={user} />
                 ) : (
                     <>
-                        <InvitationManager onAction={onRoleChange} />
+                        <ClientView onRoleChange={onRoleChange} />
                         <Card className="bg-primary/5 border-primary/20 text-center">
                             <CardHeader>
                                 <div className="mx-auto bg-primary/10 p-3 rounded-full border-2 border-primary/30 w-fit">

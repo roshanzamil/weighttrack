@@ -222,3 +222,82 @@ export async function updateInvitationStatus(invitationId: string, status: 'acce
 
     return { success: true };
 }
+
+export async function removeClient(invitationId: string) {
+    const cookieStore = cookies();
+    const supabase = createServerClient<Database>(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+            cookies: {
+                get(name: string) {
+                    return cookieStore.get(name)?.value
+                },
+            },
+        }
+    );
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        return { success: false, error: 'User not authenticated.' };
+    }
+
+    const { error } = await supabase
+        .from('invitations')
+        .delete()
+        .eq('id', invitationId)
+        .eq('trainer_id', user.id); // Ensure trainer can only delete their own clients
+
+    if (error) {
+        console.error('Error removing client:', error.message);
+        return { success: false, error: error.message };
+    }
+
+    return { success: true };
+}
+
+export async function getTrainerForClient() {
+    const cookieStore = cookies();
+    const supabase = createServerClient<Database>(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+            cookies: {
+                get(name: string) {
+                    return cookieStore.get(name)?.value
+                },
+            },
+        }
+    );
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        return { success: false, error: 'User not authenticated.', data: null };
+    }
+
+    // Find the accepted invitation for the current client
+    const { data: invitation, error: invitationError } = await supabase
+        .from('invitations')
+        .select('*')
+        .eq('client_id', user.id)
+        .eq('status', 'accepted')
+        .limit(1)
+        .single();
+    
+    if (invitationError || !invitation) {
+        return { success: true, data: null };
+    }
+
+    // Get the trainer's details
+    const { data: trainerData, error: trainerError } = await supabase.auth.admin.getUserById(invitation.trainer_id);
+    if (trainerError || !trainerData) {
+        return { success: false, error: "Could not fetch trainer details.", data: null };
+    }
+    
+    const trainer = {
+        full_name: trainerData.user.user_metadata?.full_name,
+        email: trainerData.user.email,
+    };
+
+    return { success: true, data: trainer };
+}
