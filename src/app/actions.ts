@@ -30,9 +30,13 @@ export async function updateUserRole(userId: string, role: string) {
         }
     )
 
-    // Use the standard updateUser method, not the admin method
+    const { data: { user } } = await supabaseServer.auth.getUser();
+    if (!user) {
+        return { success: false, error: 'User not authenticated.' };
+    }
+
     const { data, error } = await supabaseServer.auth.updateUser({
-        data: { role } 
+        data: { role: role }
     })
 
     if (error) {
