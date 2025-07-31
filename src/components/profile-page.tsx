@@ -68,8 +68,8 @@ function InvitationManager({onAction}) {
                         {invitations.map(invite => (
                             <li key={invite.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 rounded-md bg-secondary">
                                 <div>
-                                    <p className="font-semibold">{invite.trainer_details?.user_metadata?.full_name || 'A trainer'}</p>
-                                    <p className="text-sm text-muted-foreground flex items-center gap-1"><Mail className="w-3 h-3"/>{invite.trainer_details?.user_metadata?.email}</p>
+                                    <p className="font-semibold">{invite.trainer_details?.full_name || 'A trainer'}</p>
+                                    <p className="text-sm text-muted-foreground flex items-center gap-1"><Mail className="w-3 h-3"/>{invite.trainer_details?.email}</p>
                                 </div>
                                 <div className="flex gap-2 mt-2 sm:mt-0">
                                     <Button size="sm" variant="outline" onClick={() => handleUpdateStatus(invite.id, 'rejected')}><X className="w-4 h-4"/></Button>
