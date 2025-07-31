@@ -2,8 +2,7 @@
 'use server';
 
 import { suggestWeightIncrease, type SuggestWeightIncreaseInput } from '@/ai/flows/suggest-weight-increase';
-import { createClient } from '@supabase/supabase-js';
-import { cookies } from 'next/headers';
+import { supabase } from '@/lib/supabaseClient';
 
 export async function getAISuggestion(input: SuggestWeightIncreaseInput) {
     try {
@@ -16,31 +15,18 @@ export async function getAISuggestion(input: SuggestWeightIncreaseInput) {
 }
 
 export async function updateUserRole(userId: string, role: string) {
-    // For admin actions from a server component, we need to create a new client with the service role key.
-    // In a production environment, this should be stored securely in .env.local and not be the public anon key.
-    // For this prototype, we are using the anon key, which works because we've set up an RLS policy
-    // that allows users to update their own `user_metadata`.
-    const supabaseAdmin = createClient(
-         process.env.NEXT_PUBLIC_SUPABASE_URL!,
-         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, // In production, use process.env.SUPABASE_SERVICE_ROLE_KEY
-         {
-            auth: {
-                // This is important to ensure the admin client can perform its actions
-                autoRefreshToken: false,
-                persistSession: false
-            }
-         }
-    );
-
-    const { data, error } = await supabaseAdmin.auth.admin.updateUserById(
-        userId,
-        { user_metadata: { role: role } }
-    )
+    // This server action is called by an authenticated user.
+    // The RLS policy we created allows authenticated users to update their own `user_metadata`.
+    // Therefore, we can use the standard `supabase.auth.updateUser` method, which acts
+    // on behalf of the currently logged-in user.
+    const { data, error } = await supabase.auth.updateUser({
+        data: { role: role }
+    });
 
     if (error) {
         console.error('Error updating user role:', error);
         return { success: false, error: 'Failed to update user role.' };
     }
 
-    return { success: true, data };
+    return { success: true, data: data.user };
 }

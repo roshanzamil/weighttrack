@@ -20,6 +20,7 @@ export function TrainerPage({ user, onRoleChange }: TrainerPageProps) {
 
     const handleBecomeTrainer = async () => {
         setLoading(true);
+        // Pass the user's ID to the server action
         const result = await updateUserRole(user.id, 'trainer');
         if (result.success) {
             toast({
