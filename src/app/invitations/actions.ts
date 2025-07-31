@@ -48,6 +48,30 @@ export async function sendInvitation(clientEmail: string) {
     return { success: true, message: 'Invitation sent successfully!' };
 }
 
+async function fetchUserDetails(supabase: any, userIds: string[]) {
+    if (userIds.length === 0) return new Map();
+    
+    const { data: usersData, error: usersError } = await supabase.rpc('get_user_details_by_ids', {
+        user_ids: userIds,
+    });
+    
+    if (usersError) {
+        console.error('Error fetching user details via RPC:', usersError.message);
+        return new Map();
+    }
+    
+    const userDetailsMap = new Map();
+    if (usersData) {
+        usersData.forEach((u: any) => {
+            userDetailsMap.set(u.id, {
+                full_name: u.full_name,
+                email: u.email,
+            });
+        });
+    }
+    return userDetailsMap;
+}
+
 export async function getClientsForTrainer() {
     const cookieStore = cookies();
     const supabase = createServerClient<Database>(
@@ -68,7 +92,6 @@ export async function getClientsForTrainer() {
         return { success: false, error: 'User not authenticated.', data: [] };
     }
 
-    // Step 1: Fetch all invitations for the trainer
     const { data: invitations, error: invitationsError } = await supabase
         .from('invitations')
         .select('*')
@@ -79,39 +102,16 @@ export async function getClientsForTrainer() {
         return { success: false, error: invitationsError.message, data: [] };
     }
 
-    // Step 2: Get emails of accepted clients
     const clientIds = invitations
         .filter(inv => inv.status === 'accepted' && inv.client_id)
         .map(inv => inv.client_id!);
 
-    let clientDetailsMap = new Map();
-
-    // Step 3: Fetch user details for accepted clients if any exist
-    if (clientIds.length > 0) {
-         const { data: clientsData, error: clientsError } = await supabase
-            .from('users')
-            .select('id, raw_user_meta_data, email')
-            .in('id', clientIds)
-        
-        if (clientsError) {
-             console.error('Error fetching client details:', clientsError.message);
-             // Continue without details
-        } else if (clientsData) {
-            clientsData.forEach((u: any) => {
-                clientDetailsMap.set(u.id, {
-                    full_name: u.raw_user_meta_data?.full_name,
-                    email: u.email,
-                });
-            });
-        }
-    }
+    const clientDetailsMap = await fetchUserDetails(supabase, clientIds);
     
-    // Step 4: Combine the data
     const clients = invitations.map(inv => ({
         ...inv,
         client_details: inv.client_id ? clientDetailsMap.get(inv.client_id) : { full_name: null, email: inv.client_email },
     }));
-
 
     return { success: true, data: clients };
 }
@@ -135,7 +135,6 @@ export async function getPendingInvitationsForClient() {
         return { success: false, error: 'User not authenticated.', data: [] };
     }
 
-    // Step 1: Fetch pending invitations for the client's email
     const { data: invitations, error: invitationsError } = await supabase
         .from('invitations')
         .select(`*`)
@@ -151,33 +150,9 @@ export async function getPendingInvitationsForClient() {
         return { success: true, data: [] };
     }
 
-    // Step 2: Get trainer IDs from the invitations
     const trainerIds = invitations.map(inv => inv.trainer_id);
+    const trainerDetailsMap = await fetchUserDetails(supabase, trainerIds);
 
-    let trainerDetailsMap = new Map();
-
-    // Step 3: Fetch user details for the trainers
-    const { data: trainersData, error: trainersError } = await supabase
-        .from('users')
-        .select('id, raw_user_meta_data, email')
-        .in('id', trainerIds)
-
-    
-    if (trainersError) {
-        console.error('Error fetching trainer details:', trainersError.message);
-        // Continue without details
-    } else if (trainersData) {
-         trainersData.forEach((u: any) => {
-            if (trainerIds.includes(u.id)) {
-                trainerDetailsMap.set(u.id, {
-                    full_name: u.raw_user_meta_data?.full_name,
-                    email: u.email,
-                });
-            }
-        });
-    }
-
-    // Step 4: Combine the data
     const combinedInvitations = invitations.map(inv => ({
         ...inv,
         trainer_details: trainerDetailsMap.get(inv.trainer_id),
@@ -215,7 +190,7 @@ export async function updateInvitationStatus(invitationId: string, status: 'acce
         .from('invitations')
         .update(updatePayload)
         .eq('id', invitationId)
-        .eq('client_email', user.email); // Ensure user can only update their own invitation
+        .eq('client_email', user.email); 
 
     if (error) {
         console.error('Error updating invitation:', error.message);
@@ -244,7 +219,6 @@ export async function removeClient(invitationId: string) {
         return { success: false, error: 'User not authenticated.' };
     }
 
-    // Security check: ensure the user is the trainer for this invitation before deleting
     const { data: invitation, error: fetchError } = await supabase
         .from('invitations')
         .select('trainer_id')
@@ -291,7 +265,6 @@ export async function getTrainerForClient() {
         return { success: false, error: 'Error: Not authenticated.', data: null };
     }
 
-    // Find the accepted invitation for the current client
     const { data: invitation, error: invitationError } = await supabase
         .from('invitations')
         .select('trainer_id')
@@ -301,36 +274,19 @@ export async function getTrainerForClient() {
         .single();
     
     if (invitationError) {
-        console.error("DEBUG: Error fetching invitation:", invitationError.message);
-        return { success: false, error: `Error fetching invitation: ${invitationError.message}`, data: null };
+        return { success: true, data: null };
     }
     
     if (!invitation) {
-        // This is not an error, it just means they don't have a trainer.
         return { success: true, data: null };
     }
-
-    // Get the trainer's details
-    const { data: trainerData, error: trainerError } = await supabase
-        .from('users')
-        .select('raw_user_meta_data, email')
-        .eq('id', invitation.trainer_id)
-        .single();
-        
-    if (trainerError) {
-        console.error("DEBUG: Error fetching trainer details from auth.users:", trainerError.message);
-        return { success: false, error: `Error fetching trainer details: ${trainerError.message}`, data: null };
-    }
-        
-    if (!trainerData) {
-        console.error("DEBUG: No trainer data found for ID:", invitation.trainer_id);
-        return { success: false, error: "Trainer details not found for the given ID.", data: null };
-    }
     
-    const trainer = {
-        full_name: (trainerData.raw_user_meta_data as any)?.full_name,
-        email: trainerData.email,
-    };
+    const trainerDetailsMap = await fetchUserDetails(supabase, [invitation.trainer_id]);
+    const trainer = trainerDetailsMap.get(invitation.trainer_id);
+
+    if (!trainer) {
+        return { success: false, error: 'Error fetching trainer details.', data: null };
+    }
 
     return { success: true, data: trainer };
 }
