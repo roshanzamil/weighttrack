@@ -36,7 +36,10 @@ export async function updateUserRole(userId: string, role: string) {
     }
     
     const { data, error } = await supabase.auth.updateUser({
-        data: { role: role }
+        data: { 
+            ...user.user_metadata,
+            role: role 
+        }
     });
 
     if (error) {
