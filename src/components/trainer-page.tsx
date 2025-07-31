@@ -205,11 +205,10 @@ function ClientManagement({ user }: { user: User }) {
     )
 }
 
-function ClientView({ onRoleChange }) {
+function ClientView() {
     const [trainer, setTrainer] = useState<{full_name: string, email: string} | null>(null);
     const [loading, setLoading] = useState(true);
     const {toast} = useToast();
-    const router = useRouter();
 
     const fetchTrainer = useCallback(async () => {
         setLoading(true);
@@ -231,20 +230,22 @@ function ClientView({ onRoleChange }) {
             <div className="space-y-6">
                 <Card>
                     <CardHeader>
-                        <Skeleton className="h-6 w-32" />
+                        <CardTitle>Your Trainer</CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-2">
-                        <Skeleton className="h-5 w-48" />
-                        <Skeleton className="h-4 w-56" />
+                    <CardContent>
+                       <div className="space-y-2">
+                           <Skeleton className="h-6 w-32" />
+                           <Skeleton className="h-4 w-48" />
+                       </div>
                     </CardContent>
                 </Card>
-                <InvitationManager onAction={() => {}} />
+                <InvitationManager onAction={fetchTrainer} />
             </div>
         )
     };
     
     return (
-         <>
+         <div className="space-y-6">
             {trainer ? (
                 <Card>
                     <CardHeader>
@@ -256,9 +257,9 @@ function ClientView({ onRoleChange }) {
                     </CardContent>
                 </Card>
             ) : (
-                 <InvitationManager onAction={() => {}} />
+                 <InvitationManager onAction={fetchTrainer} />
             )}
-        </>
+        </div>
     )
 }
 
@@ -288,7 +289,7 @@ export function TrainerPage({ user, onRoleChange }: TrainerPageProps) {
                 {isTrainer ? (
                      <ClientManagement user={user} />
                 ) : (
-                    <ClientView onRoleChange={onRoleChange} />
+                    <ClientView />
                 )}
             </main>
         </div>
