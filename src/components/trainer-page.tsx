@@ -26,6 +26,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { useRouter } from "next/navigation"
 
 function InviteClientDialog({ onInviteSent }) {
     const [email, setEmail] = useState('');
@@ -197,6 +198,7 @@ function ClientView({ onRoleChange }) {
     const [trainer, setTrainer] = useState<{full_name: string, email: string} | null>(null);
     const [loading, setLoading] = useState(true);
     const {toast} = useToast();
+    const router = useRouter();
 
     const fetchTrainer = useCallback(async () => {
         const result = await getTrainerForClient();
@@ -214,6 +216,13 @@ function ClientView({ onRoleChange }) {
     
     if (loading) return <p>Loading...</p>;
     
+    const handleGoToProfile = () => {
+        router.push('/#profile'); // This is a bit of a hack, assumes bottom nav can handle this
+        // A better solution would use a shared state management (like Context or Zustand)
+        // to programmatically switch tabs. For now, this is a simple approach.
+        // We might need to adjust the ProfilePage to open the correct tab.
+    }
+    
     return (
          <>
             {trainer ? (
@@ -227,7 +236,20 @@ function ClientView({ onRoleChange }) {
                     </CardContent>
                 </Card>
             ) : (
-                 <InvitationManager onAction={onRoleChange} />
+                <>
+                 <InvitationManager onAction={() => {}} />
+                 <Card className="bg-secondary text-center mt-6">
+                    <CardHeader>
+                        <h3 className="text-lg font-semibold">Ready to Coach?</h3>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-sm text-muted-foreground mb-4">
+                            You can become a trainer from your profile settings.
+                        </p>
+                        <Button variant="outline" onClick={() => (window.location.hash = "profile")}>Go to Profile</Button>
+                    </CardContent>
+                 </Card>
+                </>
             )}
         </>
     )
@@ -241,40 +263,18 @@ interface TrainerPageProps {
 }
 
 export function TrainerPage({ user, onRoleChange }: TrainerPageProps) {
-    const [loading, setLoading] = useState(false);
     const [isTrainer, setIsTrainer] = useState(user.user_metadata?.role === 'trainer');
-    const { toast } = useToast();
 
     useEffect(() => {
         setIsTrainer(user.user_metadata?.role === 'trainer');
     }, [user]);
     
-    const handleBecomeTrainer = async () => {
-        setLoading(true);
-        const result = await updateUserRole(user.id, 'trainer');
-        
-        if (result.success) {
-             toast({
-                title: "Congratulations!",
-                description: "You are now a trainer. You can start managing your clients.",
-            });
-            onRoleChange();
-        } else {
-            toast({
-                title: "Update Failed",
-                description: result.error || "Could not update your role. Please try again later.",
-                variant: 'destructive',
-            })
-        }
-        setLoading(false);
-    }
-    
     return (
         <div className="flex flex-col h-full">
             <header className="flex items-center justify-between p-4 border-b">
                 <h1 className="text-2xl font-bold flex items-center gap-2">
-                    {isTrainer ? <Building /> : <UserPlus />}
-                    {isTrainer ? 'Trainer Dashboard' : 'Become a Trainer'}
+                    {isTrainer ? <Building /> : <Bot />}
+                    {isTrainer ? 'Trainer Dashboard' : 'Your Coach'}
                 </h1>
             </header>
             <main className="flex-1 overflow-y-auto p-4 space-y-6 pb-24">
@@ -282,25 +282,7 @@ export function TrainerPage({ user, onRoleChange }: TrainerPageProps) {
                 {isTrainer ? (
                      <ClientManagement user={user} />
                 ) : (
-                    <>
-                        <ClientView onRoleChange={onRoleChange} />
-                        <Card className="bg-primary/5 border-primary/20 text-center">
-                            <CardHeader>
-                                <div className="mx-auto bg-primary/10 p-3 rounded-full border-2 border-primary/30 w-fit">
-                                    <Sparkles className="h-8 w-8 text-primary" />
-                                </div>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <h2 className="text-2xl font-bold">Ready to Coach?</h2>
-                                <p className="text-muted-foreground">
-                                    Leverage your expertise to guide others on their fitness journey. Create personalized workout plans and manage your clients, all in one place.
-                                </p>
-                                <Button size="lg" onClick={handleBecomeTrainer} disabled={loading}>
-                                    {loading ? 'Becoming a trainer...' : 'Become a Trainer'}
-                                </Button>
-                            </CardContent>
-                        </Card>
-                    </>
+                    <ClientView onRoleChange={onRoleChange} />
                 )}
             </main>
         </div>

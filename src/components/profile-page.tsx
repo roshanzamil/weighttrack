@@ -3,7 +3,7 @@
 
 import type { User } from "@supabase/supabase-js"
 import { Button } from "./ui/button"
-import { LogOut, User as UserIcon, Undo2, Check, X, Mail } from "lucide-react"
+import { LogOut, User as UserIcon, Undo2, Check, X, Mail, Sparkles } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import {
@@ -18,7 +18,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { useState } from "react";
-import { removeTrainerRole } from "@/app/actions";
+import { removeTrainerRole, updateUserRole } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
 
 interface ProfilePageProps {
@@ -31,6 +31,26 @@ export function ProfilePage({ user, onSignOut, onRoleChange }: ProfilePageProps)
     const [loading, setLoading] = useState(false);
     const { toast } = useToast();
     const isTrainer = user.user_metadata?.role === 'trainer';
+
+    const handleBecomeTrainer = async () => {
+        setLoading(true);
+        const result = await updateUserRole(user.id, 'trainer');
+        
+        if (result.success) {
+             toast({
+                title: "Congratulations!",
+                description: "You are now a trainer. You can start managing your clients.",
+            });
+            onRoleChange();
+        } else {
+            toast({
+                title: "Update Failed",
+                description: result.error || "Could not update your role. Please try again later.",
+                variant: 'destructive',
+            })
+        }
+        setLoading(false);
+    }
 
     const handleRemoveTrainer = async () => {
         setLoading(true);
@@ -88,30 +108,57 @@ export function ProfilePage({ user, onSignOut, onRoleChange }: ProfilePageProps)
                             </CardHeader>
                             <CardContent>
                                 {isTrainer ? (
-                                    <AlertDialog>
-                                        <AlertDialogTrigger asChild>
-                                            <Button variant="destructive" disabled={loading}>
-                                                <Undo2 className="mr-2"/>
-                                                Revert to Standard Account
-                                            </Button>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent>
-                                            <AlertDialogHeader>
-                                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                            <AlertDialogDescription>
-                                                This action will remove your trainer status. You will lose access to the trainer dashboard and client management features. You can become a trainer again at any time.
-                                            </AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <AlertDialogFooter>
-                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                            <AlertDialogAction onClick={handleRemoveTrainer} disabled={loading}>
-                                                {loading ? 'Reverting...' : 'Yes, revert my account'}
-                                            </AlertDialogAction>
-                                            </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                    </AlertDialog>
+                                    <div>
+                                        <p className="text-sm text-muted-foreground mb-4">You are currently a trainer. You can manage your clients from the "Trainer" tab.</p>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button variant="destructive" disabled={loading}>
+                                                    <Undo2 className="mr-2"/>
+                                                    Revert to Standard Account
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    This action will remove your trainer status. You will lose access to the trainer dashboard and client management features. You can become a trainer again at any time.
+                                                </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={handleRemoveTrainer} disabled={loading}>
+                                                    {loading ? 'Reverting...' : 'Yes, revert my account'}
+                                                </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    </div>
                                 ) : (
-                                    <p className="text-sm text-muted-foreground">You are currently a standard user. Go to the "Trainer" tab to become a trainer.</p>
+                                    <div>
+                                         <p className="text-sm text-muted-foreground mb-4">Upgrade to a trainer account to coach clients, create workout plans, and more.</p>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button disabled={loading}>
+                                                    <Sparkles className="mr-2"/>
+                                                    Become a Trainer
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Become a Trainer?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        This will upgrade your account to a trainer account, allowing you to manage clients and access trainer features. Are you sure you want to proceed?
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={handleBecomeTrainer} disabled={loading}>
+                                                        {loading ? 'Upgrading...' : 'Yes, Become a Trainer'}
+                                                    </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    </div>
                                 )}
                             </CardContent>
                         </Card>
