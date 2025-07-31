@@ -71,7 +71,7 @@ export async function getClientsForTrainer() {
         .from('invitations')
         .select(`
             *,
-            client_details:users!invitations_client_id_fkey(
+            client_details:users(
                 raw_user_meta_data
             )
         `)
@@ -116,7 +116,7 @@ export async function getPendingInvitationsForClient() {
         .from('invitations')
         .select(`
             *,
-            trainer_details:users!invitations_trainer_id_fkey(
+            trainer_details:users(
                 raw_user_meta_data
             )
         `)
