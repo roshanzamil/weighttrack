@@ -77,3 +77,6 @@ export function TrainerPage({ user, onRoleChange }: TrainerPageProps) {
                     </Card>
                 )}
             </main>
+        </div>
+    )
+}
