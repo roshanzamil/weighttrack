@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -26,7 +27,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogClose,
   DialogFooter,
   DialogDescription,
@@ -751,18 +751,26 @@ function WorkoutsView({user, onSignOut}) {
 function MainContent({user}: {user: User}) {
     const [activeTab, setActiveTab] = useState<NavItem>('workouts');
     const router = useRouter();
+    const [currentUser, setCurrentUser] = useState(user);
 
     const handleSignOut = async () => {
         await supabase.auth.signOut();
         router.push('/login');
     }
 
+    const refreshUser = async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+            setCurrentUser(user);
+        }
+    }
+
     return (
         <div className="h-full flex flex-col">
             <main className="flex-1 overflow-y-auto">
-                {activeTab === 'workouts' && <WorkoutsView user={user} onSignOut={handleSignOut} />}
-                {activeTab === 'trainer' && <TrainerPage />}
-                {activeTab === 'profile' && <ProfilePage user={user} onSignOut={handleSignOut} />}
+                {activeTab === 'workouts' && <WorkoutsView user={currentUser} onSignOut={handleSignOut} />}
+                {activeTab === 'trainer' && <TrainerPage user={currentUser} onRoleChange={refreshUser} />}
+                {activeTab === 'profile' && <ProfilePage user={currentUser} onSignOut={handleSignOut} />}
             </main>
             <BottomNavBar activeTab={activeTab} onTabChange={setActiveTab} />
         </div>
@@ -793,6 +801,8 @@ export default function Home() {
                 router.push('/login');
             } else if (session?.user){
                 setUser(session.user);
+            } else if (event === 'USER_UPDATED') {
+                setUser(session.user)
             }
         });
 
@@ -806,10 +816,8 @@ export default function Home() {
     }
 
     if (!user) {
-        return null; // Or a loading spinner, router will redirect
+        return null;
     }
-
-    return <MainContent user={user} />;
-}
-
     
+    return <MainContent user={user} />
+}

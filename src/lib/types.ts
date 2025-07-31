@@ -1,4 +1,3 @@
-
 export interface WorkoutSet {
   id: string;
   user_id: string;
@@ -23,7 +22,7 @@ export interface Exercise {
 export interface Folder {
     id: string;
     name: string;
-    notes: string;
+    notes?: string | null;
     user_id: string;
     exercises: Exercise[];
 }
