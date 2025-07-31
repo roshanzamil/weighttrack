@@ -59,27 +59,41 @@ import { useSwipeable } from "react-swipeable";
 import { BottomNavBar, type NavItem } from "@/components/bottom-nav-bar";
 import { TrainerPage } from "@/components/trainer-page";
 import { ProfilePage } from "@/components/profile-page";
+import { WorkoutLogger } from "@/components/workout-logger";
 
 
 const popularExercises = [
     // Chest
     "Bench Press", "Incline Bench Press", "Decline Bench Press", "Dumbbell Press", "Incline Dumbbell Press",
     "Dumbbell Flyes", "Cable Crossover", "Push Up", "Dips", "Machine Chest Press", "Peck Deck", "Cable Fly", "Incline Dumbbell Flyes",
+    "Landmine Press", "Svend Press", "Chest Squeeze",
     // Back
     "Deadlift", "Barbell Row", "Bent Over Row", "T-Bar Row", "Pendlay Row", "Pull Up", "Chin Up",
     "Lat Pulldown", "Seated Cable Row", "Dumbbell Row", "Good Mornings", "Back Extension", "Single Arm Dumbbell Row", "Face Pull",
+    "Rack Pull", "Kroc Row", "Meadows Row", "Chest-Supported Row",
     // Legs
     "Squat", "Front Squat", "Leg Press", "Leg Extension", "Leg Curl", "Romanian Deadlift",
     "Bulgarian Split Squat", "Lunge", "Calf Raise", "Hip Thrust", "Hack Squat", "Goblet Squat", "Standing Calf Raise", "Seated Calf Raise",
+    "Box Squat", "Sissy Squat", "Nordic Hamstring Curl",
     // Shoulders
     "Overhead Press", "Arnold Press", "Dumbbell Lateral Raise", "Front Raise", "Reverse Pec-Deck",
     "Face Pull", "Upright Row", "Shrugs", "Military Press", "Seated Dumbbell Press", "Dumbbell Shoulder Press", "Cable Lateral Raise",
+    "Lu raises", "Y-Raises", "Bus Drivers",
     // Biceps
     "Barbell Curl", "Dumbbell Curl", "Hammer Curl", "Preacher Curl", "Concentration Curl", "Cable Curl", "Incline Dumbbell Curl", "Spider Curl",
+    "Zottman Curl", "Waiter Curl",
     // Triceps
     "Tricep Extension", "Skull Crusher", "Tricep Pushdown", "Close Grip Bench Press", "Overhead Tricep Extension", "Tricep Dips", "Rope Pushdown",
+    "JM Press", "Tate Press",
     // Abs
-    "Crunch", "Leg Raise", "Plank", "Russian Twist", "Cable Crunch", "Ab Roller", "Hanging Leg Raise", "Side Plank", "Bicycle Crunch"
+    "Crunch", "Leg Raise", "Plank", "Russian Twist", "Cable Crunch", "Ab Roller", "Hanging Leg Raise", "Side Plank", "Bicycle Crunch",
+    "Woodchopper", "Pallof Press",
+    // Forearms
+    "Wrist Curl", "Reverse Wrist Curl", "Farmer's Walk", "Plate Pinch", "Gripper",
+    // Glutes
+    "Glute Bridge", "Cable Kickback", "Banded Side Walk", "Fire Hydrant",
+    // Calves
+    "Donkey Calf Raise", "Leg Press Calf Raise",
 ];
 
 function EditSetDialog({ set, isOpen, onOpenChange, onUpdateSet, onDeleteSet, exerciseName }) {
