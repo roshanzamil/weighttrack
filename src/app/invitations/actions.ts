@@ -288,7 +288,7 @@ export async function getTrainerForClient() {
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-        return { success: false, error: 'User not authenticated.', data: null };
+        return { success: false, error: 'Error: Not authenticated.', data: null };
     }
 
     // Find the accepted invitation for the current client
@@ -300,7 +300,12 @@ export async function getTrainerForClient() {
         .limit(1)
         .single();
     
-    if (invitationError || !invitation) {
+    if (invitationError) {
+        console.error("DEBUG: Error fetching invitation:", invitationError.message);
+        return { success: false, error: `Error fetching invitation: ${invitationError.message}`, data: null };
+    }
+    
+    if (!invitation) {
         // This is not an error, it just means they don't have a trainer.
         return { success: true, data: null };
     }
@@ -312,9 +317,14 @@ export async function getTrainerForClient() {
         .eq('id', invitation.trainer_id)
         .single();
         
-    if (trainerError || !trainerData) {
-        console.error("Error fetching trainer details:", trainerError?.message);
-        return { success: false, error: "Could not fetch trainer details.", data: null };
+    if (trainerError) {
+        console.error("DEBUG: Error fetching trainer details from auth.users:", trainerError.message);
+        return { success: false, error: `Error fetching trainer details: ${trainerError.message}`, data: null };
+    }
+        
+    if (!trainerData) {
+        console.error("DEBUG: No trainer data found for ID:", invitation.trainer_id);
+        return { success: false, error: "Trainer details not found for the given ID.", data: null };
     }
     
     const trainer = {
