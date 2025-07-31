@@ -30,9 +30,9 @@ export function TrainerPage() {
                             </div>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <h2 className="text-2xl font-bold">Connect with a Trainer</h2>
+                            <h2 className="text-2xl font-bold">Ready to Coach?</h2>
                             <p className="text-muted-foreground">
-                                Get personalized workout plans, expert guidance, and accountability by connecting with a professional trainer.
+                                Leverage your expertise to guide others on their fitness journey. Create personalized workout plans and manage your clients, all in one place.
                             </p>
                             <Button size="lg">Become a Trainer</Button>
                         </CardContent>
