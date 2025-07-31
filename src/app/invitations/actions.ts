@@ -65,31 +65,55 @@ export async function getClientsForTrainer() {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-        return { success: false, error: 'User not authenticated.' };
+        return { success: false, error: 'User not authenticated.', data: [] };
     }
 
-    const { data, error } = await supabase
+    // Step 1: Fetch all invitations for the trainer
+    const { data: invitations, error: invitationsError } = await supabase
         .from('invitations')
-        .select(`
-            *,
-            client_details:users!invitations_client_id_fkey(
-                user_metadata
-            )
-        `)
+        .select('*')
         .eq('trainer_id', user.id);
     
-    if (error) {
-        console.error('Error fetching clients:', error.message);
-        return { success: false, error: error.message, data: [] };
+    if (invitationsError) {
+        console.error('Error fetching clients:', invitationsError.message);
+        return { success: false, error: invitationsError.message, data: [] };
     }
 
-    const clients = data.map(d => ({
-        ...d,
-        client_details: {
-            full_name: d.client_details?.user_metadata?.full_name,
-            email: d.client_details?.user_metadata?.email,
+    // Step 2: Get IDs of accepted clients
+    const clientIds = invitations
+        .filter(inv => inv.status === 'accepted' && inv.client_id)
+        .map(inv => inv.client_id!);
+
+    let clientDetailsMap = new Map();
+
+    // Step 3: Fetch user details for accepted clients if any exist
+    if (clientIds.length > 0) {
+        const { data: clientsData, error: clientsError } = await supabase.auth.admin.listUsers({
+            // There's no direct `in` filter, so we fetch and filter manually.
+            // This is a limitation, but listUsers is often cached and fast.
+        });
+        
+        if (clientsError) {
+             console.error('Error fetching client details:', clientsError.message);
+             // Continue without details
+        } else {
+            clientsData.users.forEach(u => {
+                if (clientIds.includes(u.id)) {
+                    clientDetailsMap.set(u.id, {
+                        full_name: u.user_metadata?.full_name,
+                        email: u.email,
+                    });
+                }
+            });
         }
-    }))
+    }
+    
+    // Step 4: Combine the data
+    const clients = invitations.map(inv => ({
+        ...inv,
+        client_details: inv.client_id ? clientDetailsMap.get(inv.client_id) : null,
+    }));
+
 
     return { success: true, data: clients };
 }
@@ -113,31 +137,51 @@ export async function getPendingInvitationsForClient() {
         return { success: false, error: 'User not authenticated.', data: [] };
     }
 
-    const { data, error } = await supabase
+    // Step 1: Fetch pending invitations for the client's email
+    const { data: invitations, error: invitationsError } = await supabase
         .from('invitations')
-        .select(`
-            *,
-            trainer_details:users!invitations_trainer_id_fkey(
-                user_metadata
-            )
-        `)
+        .select(`*`)
         .eq('client_email', user.email)
         .eq('status', 'pending');
 
-    if (error) {
-        console.error('Error fetching invitations:', error.message);
-        return { success: false, error: error.message, data: [] };
+    if (invitationsError) {
+        console.error('Error fetching invitations:', invitationsError.message);
+        return { success: false, error: invitationsError.message, data: [] };
     }
 
-    const invitations = data.map(d => ({
-        ...d,
-        trainer_details: {
-            full_name: d.trainer_details?.user_metadata?.full_name,
-            email: d.trainer_details?.user_metadata?.email,
-        }
-    }))
+    if (invitations.length === 0) {
+        return { success: true, data: [] };
+    }
 
-    return { success: true, data: invitations };
+    // Step 2: Get trainer IDs from the invitations
+    const trainerIds = invitations.map(inv => inv.trainer_id);
+
+    let trainerDetailsMap = new Map();
+
+    // Step 3: Fetch user details for the trainers
+    const { data: trainersData, error: trainersError } = await supabase.auth.admin.listUsers();
+    
+    if (trainersError) {
+        console.error('Error fetching trainer details:', trainersError.message);
+        // Continue without details
+    } else {
+         trainersData.users.forEach(u => {
+            if (trainerIds.includes(u.id)) {
+                trainerDetailsMap.set(u.id, {
+                    full_name: u.user_metadata?.full_name,
+                    email: u.email,
+                });
+            }
+        });
+    }
+
+    // Step 4: Combine the data
+    const combinedInvitations = invitations.map(inv => ({
+        ...inv,
+        trainer_details: trainerDetailsMap.get(inv.trainer_id),
+    }));
+
+    return { success: true, data: combinedInvitations };
 }
 
 
@@ -178,5 +222,3 @@ export async function updateInvitationStatus(invitationId: string, status: 'acce
 
     return { success: true };
 }
-
-    
