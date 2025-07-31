@@ -1,3 +1,6 @@
+
+import { type Tables } from "./database.types";
+
 export interface WorkoutSet {
   id: string;
   user_id: string;
@@ -26,3 +29,6 @@ export interface Folder {
     user_id: string;
     exercises: Exercise[];
 }
+
+
+export type Invitation = Tables<'invitations'>;

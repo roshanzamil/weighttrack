@@ -16,18 +16,21 @@ export type Database = {
           folder_id: string
           id: string
           name: string
+          user_id: string
         }
         Insert: {
           created_at?: string
           folder_id: string
           id?: string
           name: string
+          user_id: string
         }
         Update: {
           created_at?: string
           folder_id?: string
           id?: string
           name?: string
+          user_id?: string
         }
         Relationships: [
           {
@@ -37,6 +40,13 @@ export type Database = {
             referencedRelation: "folders"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "exercises_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
         ]
       }
       folders: {
@@ -45,20 +55,31 @@ export type Database = {
           notes: string | null
           id: string
           name: string
+          user_id: string
         }
         Insert: {
           created_at?: string
           notes?: string | null
           id?: string
           name: string
+          user_id: string
         }
         Update: {
           created_at?: string
           notes?: string | null
           id?: string
           name?: string
+          user_id?: string
         }
-        Relationships: []
+        Relationships: [
+           {
+            foreignKeyName: "folders_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       workout_sets: {
         Row: {
@@ -69,6 +90,7 @@ export type Database = {
           notes: string | null
           reps: number
           weight: number
+          user_id: string
         }
         Insert: {
           created_at?: string
@@ -78,6 +100,7 @@ export type Database = {
           notes?: string | null
           reps: number
           weight: number
+          user_id: string
         }
         Update: {
           created_at?: string
@@ -87,6 +110,7 @@ export type Database = {
           notes?: string | null
           reps?: number
           weight?: number
+          user_id?: string
         }
         Relationships: [
           {
@@ -96,7 +120,64 @@ export type Database = {
             referencedRelation: "exercises"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "workout_sets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
         ]
+      },
+      invitations: {
+        Row: {
+            id: string;
+            created_at: string;
+            trainer_id: string;
+            client_email: string;
+            client_id: string | null;
+            status: 'pending' | 'accepted' | 'rejected';
+            trainer_details?: {
+              full_name?: string,
+              email?: string
+            } | null
+            client_details?: {
+              full_name?: string,
+              email?: string
+            } | null
+        };
+        Insert: {
+            id?: string;
+            created_at?: string;
+            trainer_id: string;
+            client_email: string;
+            client_id?: string | null;
+            status?: 'pending' | 'accepted' | 'rejected';
+        };
+        Update: {
+            id?: string;
+            created_at?: string;
+            trainer_id?: string;
+            client_email?: string;
+            client_id?: string | null;
+            status?: 'pending' | 'accepted' | 'rejected';
+        };
+        Relationships: [
+            {
+                foreignKeyName: "invitations_trainer_id_fkey";
+                columns: ["trainer_id"];
+                isOneToOne: false;
+                referencedRelation: "users";
+                referencedColumns: ["id"];
+            },
+            {
+                foreignKeyName: "invitations_client_id_fkey";
+                columns: ["client_id"];
+                isOneToOne: false;
+                referencedRelation: "users";
+                referencedColumns: ["id"];
+            }
+        ];
       }
     }
     Views: {
