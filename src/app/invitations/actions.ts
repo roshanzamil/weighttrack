@@ -79,7 +79,7 @@ export async function getClientsForTrainer() {
         return { success: false, error: invitationsError.message, data: [] };
     }
 
-    // Step 2: Get IDs of accepted clients
+    // Step 2: Get emails of accepted clients
     const clientEmails = invitations
         .filter(inv => inv.status === 'accepted' && inv.client_email)
         .map(inv => inv.client_email!);
@@ -88,10 +88,11 @@ export async function getClientsForTrainer() {
 
     // Step 3: Fetch user details for accepted clients if any exist
     if (clientEmails.length > 0) {
-        const { data: clientsData, error: clientsError } = await supabase
+         const { data: clientsData, error: clientsError } = await supabase
             .from('users')
             .select('id, raw_user_meta_data, email')
-            .in('email', clientEmails);
+            .in('email', clientEmails)
+            .schema('auth');
         
         if (clientsError) {
              console.error('Error fetching client details:', clientsError.message);
@@ -160,7 +161,8 @@ export async function getPendingInvitationsForClient() {
     const { data: trainersData, error: trainersError } = await supabase
         .from('users')
         .select('id, raw_user_meta_data, email')
-        .in('id', trainerIds);
+        .in('id', trainerIds)
+        .schema('auth');
 
     
     if (trainersError) {
@@ -295,6 +297,7 @@ export async function getTrainerForClient() {
         .from('users')
         .select('raw_user_meta_data, email')
         .eq('id', invitation.trainer_id)
+        .schema('auth')
         .single();
         
     if (trainerError || !trainerData) {
