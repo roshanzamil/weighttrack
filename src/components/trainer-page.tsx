@@ -27,6 +27,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { useRouter } from "next/navigation"
+import { Skeleton } from "./ui/skeleton"
 
 function InviteClientDialog({ onInviteSent }) {
     const [email, setEmail] = useState('');
@@ -135,7 +136,12 @@ function ClientManagement({ user }: { user: User }) {
                     <CardTitle className="flex items-center gap-2"><Clock /> Pending Invitations</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    {loading ? <p>Loading...</p> : pendingClients.length > 0 ? (
+                    {loading ? (
+                        <div className="space-y-2">
+                            <Skeleton className="h-10 w-full" />
+                            <Skeleton className="h-10 w-full" />
+                        </div>
+                    ) : pendingClients.length > 0 ? (
                         <ul className="space-y-2">
                            {pendingClients.map(client => (
                                <li key={client.id} className="flex items-center justify-between p-2 rounded-md bg-secondary">
@@ -153,7 +159,12 @@ function ClientManagement({ user }: { user: User }) {
                     <CardTitle className="flex items-center gap-2"><UserCheck /> Active Clients</CardTitle>
                 </CardHeader>
                 <CardContent>
-                     {loading ? <p>Loading...</p> : activeClients.length > 0 ? (
+                     {loading ? (
+                         <div className="space-y-3">
+                            <Skeleton className="h-16 w-full" />
+                            <Skeleton className="h-16 w-full" />
+                        </div>
+                    ) : activeClients.length > 0 ? (
                          <ul className="space-y-3">
                            {activeClients.map(client => (
                                <li key={client.id} className="flex items-center justify-between p-3 rounded-md bg-secondary">
@@ -201,6 +212,7 @@ function ClientView({ onRoleChange }) {
     const router = useRouter();
 
     const fetchTrainer = useCallback(async () => {
+        setLoading(true);
         const result = await getTrainerForClient();
         if (result.success) {
             setTrainer(result.data as any);
@@ -214,14 +226,22 @@ function ClientView({ onRoleChange }) {
         fetchTrainer();
     }, [fetchTrainer]);
     
-    if (loading) return <p>Loading...</p>;
-    
-    const handleGoToProfile = () => {
-        router.push('/#profile'); // This is a bit of a hack, assumes bottom nav can handle this
-        // A better solution would use a shared state management (like Context or Zustand)
-        // to programmatically switch tabs. For now, this is a simple approach.
-        // We might need to adjust the ProfilePage to open the correct tab.
-    }
+    if (loading) {
+        return (
+            <div className="space-y-6">
+                <Card>
+                    <CardHeader>
+                        <Skeleton className="h-6 w-32" />
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                        <Skeleton className="h-5 w-48" />
+                        <Skeleton className="h-4 w-56" />
+                    </CardContent>
+                </Card>
+                <InvitationManager onAction={() => {}} />
+            </div>
+        )
+    };
     
     return (
          <>
@@ -236,24 +256,10 @@ function ClientView({ onRoleChange }) {
                     </CardContent>
                 </Card>
             ) : (
-                <>
                  <InvitationManager onAction={() => {}} />
-                 <Card className="bg-secondary text-center mt-6">
-                    <CardHeader>
-                        <h3 className="text-lg font-semibold">Ready to Coach?</h3>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-sm text-muted-foreground mb-4">
-                            You can become a trainer from your profile settings.
-                        </p>
-                        <Button variant="outline" onClick={() => (window.location.hash = "profile")}>Go to Profile</Button>
-                    </CardContent>
-                 </Card>
-                </>
             )}
         </>
     )
-
 }
 
 
