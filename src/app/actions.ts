@@ -3,6 +3,8 @@
 
 import { suggestWeightIncrease, type SuggestWeightIncreaseInput } from '@/ai/flows/suggest-weight-increase';
 import { supabase } from '@/lib/supabaseClient';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
 
 export async function getAISuggestion(input: SuggestWeightIncreaseInput) {
     try {
@@ -15,16 +17,26 @@ export async function getAISuggestion(input: SuggestWeightIncreaseInput) {
 }
 
 export async function updateUserRole(userId: string, role: string) {
-    // This server action is called by an authenticated user.
-    // The RLS policy we created allows authenticated users to update their own `user_metadata`.
-    // Therefore, we can use the standard `supabase.auth.updateUser` method, which acts
-    // on behalf of the currently logged-in user.
-    const { data, error } = await supabase.auth.updateUser({
+    const cookieStore = cookies()
+    const supabaseServer = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+            cookies: {
+                get(name: string) {
+                    return cookieStore.get(name)?.value
+                },
+            },
+        }
+    );
+
+    const { data, error } = await supabaseServer.auth.updateUser({
         data: { role: role }
     });
 
+
     if (error) {
-        console.error('Error updating user role:', error);
+        console.error('Error updating user role:', error.message);
         return { success: false, error: 'Failed to update user role.' };
     }
 
