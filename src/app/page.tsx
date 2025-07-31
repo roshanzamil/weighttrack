@@ -61,6 +61,7 @@ import { BottomNavBar, type NavItem } from "@/components/bottom-nav-bar";
 import { TrainerPage } from "@/components/trainer-page";
 import { ProfilePage } from "@/components/profile-page";
 import { WorkoutLogger } from "@/components/workout-logger";
+import { Skeleton } from "@/components/ui/skeleton";
 
 
 const popularExercises = [
@@ -779,6 +780,30 @@ function MainContent({user}: {user: User}) {
     )
 }
 
+function LoadingSkeleton() {
+    return (
+        <div className="flex flex-col h-screen">
+            <header className="flex items-center justify-between p-4 border-b">
+                <Skeleton className="h-8 w-48" />
+                <Skeleton className="h-8 w-8 rounded-full" />
+            </header>
+            <main className="flex-1 overflow-y-auto p-4 space-y-4">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-20 w-full" />
+            </main>
+            <div className="fixed bottom-0 left-0 right-0 h-16 bg-card border-t border-border z-20">
+                <div className="flex justify-around items-center h-full">
+                    <Skeleton className="h-10 w-16" />
+                    <Skeleton className="h-10 w-16" />
+                    <Skeleton className="h-10 w-16" />
+                </div>
+            </div>
+        </div>
+    )
+}
+
 
 export default function Home() {
     const [user, setUser] = useState<User | null>(null);
@@ -811,7 +836,7 @@ export default function Home() {
     }, [router, supabase]);
 
     if (loading) {
-        return <div className="flex items-center justify-center h-screen">Loading...</div>;
+        return <LoadingSkeleton />;
     }
 
     if (!user) {
@@ -820,3 +845,5 @@ export default function Home() {
     
     return <MainContent user={user} />
 }
+
+    
