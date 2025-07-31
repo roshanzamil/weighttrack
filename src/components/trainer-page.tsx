@@ -1,13 +1,25 @@
 
 "use client"
 
-import { Bot, UserPlus, Sparkles, Building, Users } from "lucide-react"
+import { Bot, UserPlus, Sparkles, Building, Users, Undo2 } from "lucide-react"
 import { Button } from "./ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card"
 import { useState } from "react"
-import { updateUserRole } from "@/app/actions"
+import { updateUserRole, removeTrainerRole } from "@/app/actions"
 import { useToast } from "@/hooks/use-toast"
 import type { User } from "@supabase/supabase-js"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+
 
 interface TrainerPageProps {
     user: User;
@@ -17,6 +29,8 @@ interface TrainerPageProps {
 export function TrainerPage({ user, onRoleChange }: TrainerPageProps) {
     const [loading, setLoading] = useState(false);
     const { toast } = useToast();
+    
+    const isTrainer = user.user_metadata?.role === 'trainer';
 
     const handleBecomeTrainer = async () => {
         setLoading(true);
@@ -37,27 +51,77 @@ export function TrainerPage({ user, onRoleChange }: TrainerPageProps) {
         }
         setLoading(false);
     }
-    
-    const isTrainer = user.user_metadata?.role === 'trainer';
 
+    const handleRemoveTrainer = async () => {
+        setLoading(true);
+        const result = await removeTrainerRole();
+        if (result.success) {
+            toast({
+                title: "Account Updated",
+                description: "You are now a standard user.",
+            });
+            onRoleChange();
+        } else {
+             toast({
+                title: "Update Failed",
+                description: result.error || "Could not update your role. Please try again later.",
+                variant: 'destructive',
+            })
+        }
+        setLoading(false);
+    }
+    
     return (
         <div className="flex flex-col h-full">
             <header className="flex items-center justify-between p-4 border-b">
                 <h1 className="text-2xl font-bold flex items-center gap-2">
                     {isTrainer ? <Building /> : <UserPlus />}
-                    {isTrainer ? 'Trainer Dashboard' : 'Trainer'}
+                    {isTrainer ? 'Trainer Dashboard' : 'Become a Trainer'}
                 </h1>
             </header>
             <main className="flex-1 overflow-y-auto p-4 space-y-6 pb-24">
 
                 {isTrainer ? (
-                     <div className="text-center">
-                        <div className="mx-auto bg-primary/10 p-4 rounded-full border-2 border-primary/30 w-fit mb-4">
-                            <Users className="h-10 w-10 text-primary" />
+                     <div className="space-y-6">
+                        <div className="text-center">
+                            <div className="mx-auto bg-primary/10 p-4 rounded-full border-2 border-primary/30 w-fit mb-4">
+                                <Users className="h-10 w-10 text-primary" />
+                            </div>
+                            <h2 className="text-2xl font-bold">Manage Your Clients</h2>
+                            <p className="text-muted-foreground mt-2">This is where you'll see your client list, assign workout plans, and track their progress.</p>
+                            <Button className="mt-6" size="lg">Add New Client</Button>
                         </div>
-                        <h2 className="text-2xl font-bold">Manage Your Clients</h2>
-                        <p className="text-muted-foreground mt-2">This is where you'll see your client list, assign workout plans, and track their progress.</p>
-                        <Button className="mt-6" size="lg">Add New Client</Button>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Account Settings</CardTitle>
+                                <CardDescription>Manage your trainer account status.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                 <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button variant="destructive" disabled={loading}>
+                                            <Undo2 className="mr-2"/>
+                                            Revert to Standard Account
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            This action will remove your trainer status. You will lose access to the trainer dashboard and client management features. You can become a trainer again at any time.
+                                        </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={handleRemoveTrainer} disabled={loading}>
+                                            {loading ? 'Reverting...' : 'Yes, revert my account'}
+                                        </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            </CardContent>
+                        </Card>
                      </div>
                 ) : (
                     <Card className="bg-primary/5 border-primary/20 text-center">

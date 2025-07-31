@@ -52,3 +52,40 @@ export async function updateUserRole(userId: string, role: string) {
 
     return { success: true, data };
 }
+
+export async function removeTrainerRole() {
+    const cookieStore = cookies();
+    const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+            cookies: {
+                get(name: string) {
+                    return cookieStore.get(name)?.value
+                },
+            },
+        }
+    );
+
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        return { success: false, error: 'User not authenticated.' };
+    }
+    
+    const newMetadata = { 
+        ...user.user_metadata,
+        role: null
+    };
+
+    const { data, error } = await supabase.auth.updateUser({
+        data: newMetadata
+    });
+
+    if (error) {
+        console.error('Error removing trainer role:', error.message);
+        return { success: false, error: error.message };
+    }
+
+    return { success: true, data };
+}
