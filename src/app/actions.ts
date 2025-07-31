@@ -9,9 +9,9 @@ export async function getAISuggestion(input: SuggestWeightIncreaseInput) {
     try {
         const result = await suggestWeightIncrease(input);
         return { success: true, data: result };
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error getting AI suggestion:', error);
-        return { success: false, error: 'An error occurred while getting your suggestion.' };
+        return { success: false, error: error.message || 'An error occurred while getting your suggestion.' };
     }
 }
 
@@ -44,7 +44,7 @@ export async function updateUserRole(userId: string, role: string) {
 
     if (error) {
         console.error('Error updating user role:', error.message);
-        return { success: false, error: 'Failed to update user role.' };
+        return { success: false, error: error.message };
     }
 
     return { success: true, data };

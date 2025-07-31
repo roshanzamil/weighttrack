@@ -16,13 +16,11 @@ interface TrainerPageProps {
 
 export function TrainerPage({ user, onRoleChange }: TrainerPageProps) {
     const [loading, setLoading] = useState(false);
-    // Optimistic UI state
     const [isOptimisticTrainer, setIsOptimisticTrainer] = useState(user.user_metadata?.role === 'trainer');
     const { toast } = useToast();
 
     const handleBecomeTrainer = async () => {
         setLoading(true);
-        // Optimistically update the UI
         setIsOptimisticTrainer(true);
 
         const result = await updateUserRole(user.id, 'trainer');
@@ -36,10 +34,9 @@ export function TrainerPage({ user, onRoleChange }: TrainerPageProps) {
         } else {
             toast({
                 title: "Update Failed",
-                description: "Could not update your role in the database. Please try again later.",
+                description: result.error || "Could not update your role. Please try again later.",
                 variant: 'destructive',
             })
-            // Revert the optimistic update on failure
             setIsOptimisticTrainer(false);
         }
         setLoading(false);
