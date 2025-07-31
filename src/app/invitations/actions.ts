@@ -80,18 +80,18 @@ export async function getClientsForTrainer() {
     }
 
     // Step 2: Get emails of accepted clients
-    const clientEmails = invitations
-        .filter(inv => inv.status === 'accepted' && inv.client_email)
-        .map(inv => inv.client_email!);
+    const clientIds = invitations
+        .filter(inv => inv.status === 'accepted' && inv.client_id)
+        .map(inv => inv.client_id!);
 
     let clientDetailsMap = new Map();
 
     // Step 3: Fetch user details for accepted clients if any exist
-    if (clientEmails.length > 0) {
+    if (clientIds.length > 0) {
          const { data: clientsData, error: clientsError } = await supabase
             .from('users')
             .select('id, raw_user_meta_data, email')
-            .in('email', clientEmails)
+            .in('id', clientIds)
             .schema('auth');
         
         if (clientsError) {
@@ -246,11 +246,25 @@ export async function removeClient(invitationId: string) {
         return { success: false, error: 'User not authenticated.' };
     }
 
+    // Security check: ensure the user is the trainer for this invitation before deleting
+    const { data: invitation, error: fetchError } = await supabase
+        .from('invitations')
+        .select('trainer_id')
+        .eq('id', invitationId)
+        .single();
+    
+    if (fetchError || !invitation) {
+        return { success: false, error: 'Invitation not found.' };
+    }
+
+    if (invitation.trainer_id !== user.id) {
+        return { success: false, error: 'You are not authorized to perform this action.' };
+    }
+
     const { error } = await supabase
         .from('invitations')
         .delete()
-        .eq('id', invitationId)
-        .eq('trainer_id', user.id); // Ensure trainer can only delete their own clients
+        .eq('id', invitationId);
 
     if (error) {
         console.error('Error removing client:', error.message);
@@ -282,13 +296,14 @@ export async function getTrainerForClient() {
     // Find the accepted invitation for the current client
     const { data: invitation, error: invitationError } = await supabase
         .from('invitations')
-        .select('*')
+        .select('trainer_id')
         .eq('client_id', user.id)
         .eq('status', 'accepted')
         .limit(1)
         .single();
     
     if (invitationError || !invitation) {
+        // This is not an error, it just means they don't have a trainer.
         return { success: true, data: null };
     }
 
@@ -301,7 +316,7 @@ export async function getTrainerForClient() {
         .single();
         
     if (trainerError || !trainerData) {
-        console.error("Error fetching trainer details:", trainerError);
+        console.error("Error fetching trainer details:", trainerError?.message);
         return { success: false, error: "Could not fetch trainer details.", data: null };
     }
     
