@@ -3,10 +3,11 @@
 
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import type { Database } from '@/lib/database.types';
 
 export async function sendInvitation(clientEmail: string) {
     const cookieStore = cookies();
-    const supabase = createServerClient(
+    const supabase = createServerClient<Database>(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
         {
@@ -49,7 +50,7 @@ export async function sendInvitation(clientEmail: string) {
 
 export async function getClientsForTrainer() {
     const cookieStore = cookies();
-    const supabase = createServerClient(
+    const supabase = createServerClient<Database>(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
         {
@@ -71,8 +72,8 @@ export async function getClientsForTrainer() {
         .from('invitations')
         .select(`
             *,
-            client_details:users(
-                raw_user_meta_data
+            client_details:users!invitations_client_id_fkey(
+                user_metadata
             )
         `)
         .eq('trainer_id', user.id);
@@ -85,8 +86,8 @@ export async function getClientsForTrainer() {
     const clients = data.map(d => ({
         ...d,
         client_details: {
-            full_name: d.client_details?.raw_user_meta_data?.full_name,
-            email: d.client_details?.raw_user_meta_data?.email,
+            full_name: d.client_details?.user_metadata?.full_name,
+            email: d.client_details?.user_metadata?.email,
         }
     }))
 
@@ -95,7 +96,7 @@ export async function getClientsForTrainer() {
 
 export async function getPendingInvitationsForClient() {
     const cookieStore = cookies();
-    const supabase = createServerClient(
+    const supabase = createServerClient<Database>(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
         {
@@ -116,8 +117,8 @@ export async function getPendingInvitationsForClient() {
         .from('invitations')
         .select(`
             *,
-            trainer_details:users(
-                raw_user_meta_data
+            trainer_details:users!invitations_trainer_id_fkey(
+                user_metadata
             )
         `)
         .eq('client_email', user.email)
@@ -131,8 +132,8 @@ export async function getPendingInvitationsForClient() {
     const invitations = data.map(d => ({
         ...d,
         trainer_details: {
-            full_name: d.trainer_details?.raw_user_meta_data?.full_name,
-            email: d.trainer_details?.raw_user_meta_data?.email,
+            full_name: d.trainer_details?.user_metadata?.full_name,
+            email: d.trainer_details?.user_metadata?.email,
         }
     }))
 
@@ -142,7 +143,7 @@ export async function getPendingInvitationsForClient() {
 
 export async function updateInvitationStatus(invitationId: string, status: 'accepted' | 'rejected') {
     const cookieStore = cookies();
-    const supabase = createServerClient(
+    const supabase = createServerClient<Database>(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
         {

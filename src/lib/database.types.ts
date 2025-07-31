@@ -137,14 +137,18 @@ export type Database = {
             client_email: string;
             client_id: string | null;
             status: 'pending' | 'accepted' | 'rejected';
-            trainer_details?: {
-              full_name?: string,
-              email?: string
-            } | null
             client_details?: {
-              full_name?: string,
-              email?: string
-            } | null
+              user_metadata?: {
+                full_name?: string;
+                email?: string;
+              }
+            } | null;
+            trainer_details?: {
+              user_metadata?: {
+                full_name?: string;
+                email?: string;
+              }
+            } | null;
         };
         Insert: {
             id?: string;

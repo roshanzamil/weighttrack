@@ -4,7 +4,7 @@
 import { Bot, UserPlus, Sparkles, Building, Users, Send, Clock, UserCheck } from "lucide-react"
 import { Button } from "./ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { updateUserRole } from "@/app/actions"
 import { useToast } from "@/hooks/use-toast"
 import type { User } from "@supabase/supabase-js"
@@ -12,26 +12,15 @@ import { Input } from "./ui/input"
 import { getClientsForTrainer, sendInvitation } from "@/app/invitations/actions"
 import type { Invitation } from "@/lib/types"
 import { Badge } from "./ui/badge"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog"
+import { Label } from "./ui/label"
 
 
-function ClientManagement({ user }: { user: User }) {
+function InviteClientDialog({ onInviteSent }) {
     const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false);
-    const [clients, setClients] = useState<Invitation[]>([]);
+    const [isOpen, setIsOpen] = useState(false);
     const { toast } = useToast();
-
-    const fetchClients = async () => {
-        const result = await getClientsForTrainer();
-        if (result.success) {
-            setClients(result.data as Invitation[]);
-        } else {
-            toast({ title: "Error", description: result.error, variant: "destructive" });
-        }
-    }
-
-    useEffect(() => {
-        fetchClients();
-    }, []);
 
     const handleSendInvitation = async () => {
         if (!email) {
@@ -43,12 +32,76 @@ function ClientManagement({ user }: { user: User }) {
         if (result.success) {
             toast({ title: "Success", description: result.message });
             setEmail('');
-            fetchClients(); // Refresh client list
+            setIsOpen(false);
+            onInviteSent(); // Refresh client list
         } else {
             toast({ title: "Error", description: result.error, variant: "destructive" });
         }
         setLoading(false);
     }
+    
+    return (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+                <Button size="lg" className="rounded-full w-16 h-16 fixed bottom-20 right-6 shadow-lg z-20">
+                  <UserPlus className="w-6 h-6"/>
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Invite a New Client</DialogTitle>
+                    <DialogDescription>Enter the email of the user you want to coach. They will receive an invitation to accept.</DialogDescription>
+                </DialogHeader>
+                 <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="email" className="text-right">
+                        Email
+                    </Label>
+                    <Input
+                        id="email"
+                        type="email" 
+                        placeholder="client@example.com" 
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        disabled={loading}
+                        className="col-span-3"
+                    />
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
+                    <Button onClick={handleSendInvitation} disabled={loading}>
+                        <Send className="mr-2"/>
+                        {loading ? 'Sending...' : 'Send Invite'}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
+
+function ClientManagement({ user }: { user: User }) {
+    const [clients, setClients] = useState<Invitation[]>([]);
+    const [loading, setLoading] = useState(true);
+    const { toast } = useToast();
+
+    const fetchClients = useCallback(async () => {
+        setLoading(true);
+        const result = await getClientsForTrainer();
+        if (result.success) {
+            setClients(result.data as Invitation[]);
+        } else {
+            toast({ title: "Error", description: result.error, variant: "destructive" });
+        }
+        setLoading(false);
+    }, [toast]);
+
+
+    useEffect(() => {
+        fetchClients();
+    }, [fetchClients]);
+
 
     const pendingClients = clients.filter(c => c.status === 'pending');
     const activeClients = clients.filter(c => c.status === 'accepted');
@@ -57,30 +110,10 @@ function ClientManagement({ user }: { user: User }) {
         <div className="space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle>Invite a New Client</CardTitle>
-                    <CardDescription>Enter the email of the user you want to invite.</CardDescription>
-                </CardHeader>
-                <CardContent className="flex gap-2">
-                    <Input 
-                        type="email" 
-                        placeholder="client@example.com" 
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        disabled={loading}
-                    />
-                    <Button onClick={handleSendInvitation} disabled={loading}>
-                        <Send className="mr-2"/>
-                        {loading ? 'Sending...' : 'Send Invite'}
-                    </Button>
-                </CardContent>
-            </Card>
-
-            <Card>
-                <CardHeader>
                     <CardTitle className="flex items-center gap-2"><Clock /> Pending Invitations</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    {pendingClients.length > 0 ? (
+                    {loading ? <p>Loading...</p> : pendingClients.length > 0 ? (
                         <ul className="space-y-2">
                            {pendingClients.map(client => (
                                <li key={client.id} className="flex items-center justify-between p-2 rounded-md bg-secondary">
@@ -98,7 +131,7 @@ function ClientManagement({ user }: { user: User }) {
                     <CardTitle className="flex items-center gap-2"><UserCheck /> Active Clients</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    {activeClients.length > 0 ? (
+                     {loading ? <p>Loading...</p> : activeClients.length > 0 ? (
                          <ul className="space-y-2">
                            {activeClients.map(client => (
                                <li key={client.id} className="flex items-center justify-between p-2 rounded-md bg-secondary">
@@ -110,7 +143,8 @@ function ClientManagement({ user }: { user: User }) {
                     ) : <p className="text-muted-foreground text-sm">No active clients yet.</p>}
                 </CardContent>
             </Card>
-
+            
+             <InviteClientDialog onInviteSent={fetchClients} />
         </div>
     )
 }
@@ -123,16 +157,19 @@ interface TrainerPageProps {
 
 export function TrainerPage({ user, onRoleChange }: TrainerPageProps) {
     const [loading, setLoading] = useState(false);
+    const [isTrainer, setIsTrainer] = useState(user.user_metadata?.role === 'trainer');
     const { toast } = useToast();
-    
-    const isTrainer = user.user_metadata?.role === 'trainer';
 
+    useEffect(() => {
+        setIsTrainer(user.user_metadata?.role === 'trainer');
+    }, [user]);
+    
     const handleBecomeTrainer = async () => {
         setLoading(true);
         const result = await updateUserRole(user.id, 'trainer');
         
         if (result.success) {
-            toast({
+             toast({
                 title: "Congratulations!",
                 description: "You are now a trainer. You can start managing your clients.",
             });
