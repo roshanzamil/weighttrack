@@ -1,3 +1,4 @@
+
 'use server';
 
 import { suggestWeightIncrease, type SuggestWeightIncreaseInput } from '@/ai/flows/suggest-weight-increase';
@@ -17,7 +18,7 @@ export async function getAISuggestion(input: SuggestWeightIncreaseInput) {
 
 export async function updateUserRole(userId: string, role: string) {
     const cookieStore = cookies()
-    const supabaseAdmin = createServerClient(
+    const supabaseServer = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
         {
@@ -29,10 +30,10 @@ export async function updateUserRole(userId: string, role: string) {
         }
     )
 
-    const { data, error } = await supabaseAdmin.auth.admin.updateUserById(
-        userId,
-        { user_metadata: { role } }
-    )
+    // Use the standard updateUser method, not the admin method
+    const { data, error } = await supabaseServer.auth.updateUser({
+        data: { role } 
+    })
 
     if (error) {
         console.error('Error updating user role:', error);
