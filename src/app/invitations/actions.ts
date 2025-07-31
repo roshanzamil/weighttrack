@@ -89,14 +89,14 @@ export async function getClientsForTrainer() {
     // Step 3: Fetch user details for accepted clients if any exist
     if (clientIds.length > 0) {
          const { data: clientsData, error: clientsError } = await supabase
-            .from('users', { schema: 'auth' })
+            .from('users')
             .select('id, raw_user_meta_data, email')
-            .in('id', clientIds);
+            .in('id', clientIds)
         
         if (clientsError) {
              console.error('Error fetching client details:', clientsError.message);
              // Continue without details
-        } else {
+        } else if (clientsData) {
             clientsData.forEach((u: any) => {
                 clientDetailsMap.set(u.id, {
                     full_name: u.raw_user_meta_data?.full_name,
@@ -147,7 +147,7 @@ export async function getPendingInvitationsForClient() {
         return { success: false, error: invitationsError.message, data: [] };
     }
 
-    if (invitations.length === 0) {
+    if (!invitations || invitations.length === 0) {
         return { success: true, data: [] };
     }
 
@@ -158,15 +158,15 @@ export async function getPendingInvitationsForClient() {
 
     // Step 3: Fetch user details for the trainers
     const { data: trainersData, error: trainersError } = await supabase
-        .from('users', { schema: 'auth' })
+        .from('users')
         .select('id, raw_user_meta_data, email')
-        .in('id', trainerIds);
+        .in('id', trainerIds)
 
     
     if (trainersError) {
         console.error('Error fetching trainer details:', trainersError.message);
         // Continue without details
-    } else {
+    } else if (trainersData) {
          trainersData.forEach((u: any) => {
             if (trainerIds.includes(u.id)) {
                 trainerDetailsMap.set(u.id, {
@@ -312,7 +312,7 @@ export async function getTrainerForClient() {
 
     // Get the trainer's details
     const { data: trainerData, error: trainerError } = await supabase
-        .from('users', { schema: 'auth' })
+        .from('users')
         .select('raw_user_meta_data, email')
         .eq('id', invitation.trainer_id)
         .single();
@@ -334,5 +334,3 @@ export async function getTrainerForClient() {
 
     return { success: true, data: trainer };
 }
-
-    
