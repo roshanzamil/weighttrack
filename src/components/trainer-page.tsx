@@ -1,4 +1,5 @@
 
+
 "use client"
 
 import { Bot, UserPlus, Sparkles, Building, Users, Send, Clock, UserCheck, Mail, Check, X, Trash2 } from "lucide-react"
@@ -8,7 +9,7 @@ import { useCallback, useEffect, useState } from "react"
 import { updateUserRole } from "@/app/actions"
 import { useToast } from "@/hooks/use-toast"
 import type { User } from "@supabase/supabase-js"
-import { getClientsForTrainer, getTrainerForClient, removeClient, sendInvitation } from "@/app/invitations/actions"
+import { getClientsForTrainer, getTrainerForClient, removeClient, sendInvitation, getPendingInvitationsForClient } from "@/app/invitations/actions"
 import type { Invitation } from "@/lib/types"
 import { Badge } from "./ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog"
@@ -207,23 +208,33 @@ function ClientManagement({ user }: { user: User }) {
 
 function ClientView() {
     const [trainer, setTrainer] = useState<{full_name: string, email: string} | null>(null);
+    const [invitations, setInvitations] = useState<Invitation[]>([]);
     const [loading, setLoading] = useState(true);
     const {toast} = useToast();
 
-    const fetchTrainer = useCallback(async () => {
+    const fetchData = useCallback(async () => {
         setLoading(true);
-        const result = await getTrainerForClient();
-        if (result.success) {
-            setTrainer(result.data as any);
+        const trainerResult = await getTrainerForClient();
+        if (trainerResult.success) {
+            setTrainer(trainerResult.data as any);
+            // If they have a trainer, we don't need to check for invitations
+            if (!trainerResult.data) {
+                const invitationsResult = await getPendingInvitationsForClient();
+                 if (invitationsResult.success) {
+                    setInvitations(invitationsResult.data as Invitation[]);
+                } else {
+                    toast({title: 'Error', description: invitationsResult.error, variant: 'destructive'});
+                }
+            }
         } else {
-            toast({title: 'Error', description: result.error, variant: 'destructive'});
+            toast({title: 'Error', description: trainerResult.error, variant: 'destructive'});
         }
         setLoading(false);
     }, [toast]);
     
     useEffect(() => {
-        fetchTrainer();
-    }, [fetchTrainer]);
+        fetchData();
+    }, [fetchData]);
     
     if (loading) {
         return (
@@ -239,7 +250,16 @@ function ClientView() {
                        </div>
                     </CardContent>
                 </Card>
-                <InvitationManager onAction={fetchTrainer} />
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Pending Invitations</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                       <div className="space-y-2">
+                           <Skeleton className="h-12 w-full" />
+                       </div>
+                    </CardContent>
+                </Card>
             </div>
         )
     };
@@ -257,7 +277,11 @@ function ClientView() {
                     </CardContent>
                 </Card>
             ) : (
-                 <InvitationManager onAction={fetchTrainer} />
+                 <InvitationManager 
+                    initialLoading={loading}
+                    invitations={invitations}
+                    onAction={fetchData} 
+                 />
             )}
         </div>
     )

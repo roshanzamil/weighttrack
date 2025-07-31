@@ -1,40 +1,23 @@
 
+
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { getPendingInvitationsForClient, updateInvitationStatus } from "@/app/invitations/actions";
+import { updateInvitationStatus } from "@/app/invitations/actions";
 import type { Invitation } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Check, Mail, X } from "lucide-react";
 import { Skeleton } from "./ui/skeleton";
 
-export function InvitationManager({onAction}) {
-    const [invitations, setInvitations] = useState<Invitation[]>([]);
-    const [loading, setLoading] = useState(true);
+export function InvitationManager({initialLoading, invitations, onAction}) {
     const { toast } = useToast();
-
-    const fetchInvitations = useCallback(async () => {
-        setLoading(true);
-        const result = await getPendingInvitationsForClient();
-        if (result.success) {
-            setInvitations(result.data as Invitation[]);
-        } else {
-            toast({ title: 'Error', description: result.error, variant: 'destructive' });
-        }
-        setLoading(false);
-    }, [toast]);
-
-    useEffect(() => {
-        fetchInvitations();
-    }, [fetchInvitations]);
 
     const handleUpdateStatus = async (id: string, status: 'accepted' | 'rejected') => {
         const result = await updateInvitationStatus(id, status);
         if (result.success) {
             toast({title: `Invitation ${status}!`});
-            fetchInvitations(); // Refresh list
             onAction(); // To refresh any other dependent data
         } else {
             toast({title: 'Error', description: result.error, variant: 'destructive'});
@@ -48,7 +31,7 @@ export function InvitationManager({onAction}) {
                 <CardDescription>Respond to coaching invitations from trainers.</CardDescription>
             </CardHeader>
             <CardContent>
-                 {loading ? (
+                 {initialLoading ? (
                     <div className="space-y-2">
                         <Skeleton className="h-12 w-full" />
                         <Skeleton className="h-12 w-full" />
