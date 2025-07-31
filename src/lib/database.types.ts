@@ -42,19 +42,19 @@ export type Database = {
       folders: {
         Row: {
           created_at: string
-          description: string | null
+          notes: string | null
           id: string
           name: string
         }
         Insert: {
           created_at?: string
-          description?: string | null
+          notes?: string | null
           id?: string
           name: string
         }
         Update: {
           created_at?: string
-          description?: string | null
+          notes?: string | null
           id?: string
           name?: string
         }

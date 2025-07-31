@@ -23,7 +23,7 @@ export interface Exercise {
 export interface Folder {
     id: string;
     name: string;
-    description: string;
+    notes: string;
     user_id: string;
     exercises: Exercise[];
 }

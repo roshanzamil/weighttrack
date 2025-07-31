@@ -87,8 +87,9 @@ export function useWorkouts(user: User | null) {
   }, [toast, user]);
 
 
-  const updateWorkoutSet = useCallback(async (updatedSet: WorkoutSet) => {
+ const updateWorkoutSet = useCallback(async (updatedSet: WorkoutSet) => {
     const { id, exercise_id, date, weight, reps, notes } = updatedSet;
+    // Create a clean object with only the columns that exist in the 'workout_sets' table
     const setToUpdate = { id, exercise_id, date, weight, reps, notes };
 
     const { error } = await supabase
@@ -99,9 +100,14 @@ export function useWorkouts(user: User | null) {
     if (error) {
         toast({ title: "Error updating set", description: error.message, variant: "destructive" });
     } else {
-        setWorkouts(prev => prev.map(w => w.id === updatedSet.id ? updatedSet : w));
+        // Find the exercise name from the existing state to avoid re-fetching
+        const originalSet = workouts.find(w => w.id === updatedSet.id);
+        const exerciseName = originalSet ? originalSet.exerciseName : 'Unknown Exercise';
+        
+        // Update local state with the full object, including the client-side 'exerciseName'
+        setWorkouts(prev => prev.map(w => w.id === updatedSet.id ? { ...updatedSet, exerciseName } : w));
     }
-  }, [toast]);
+  }, [toast, workouts]);
 
   const deleteWorkoutSet = useCallback(async (workoutId: string) => {
      const { error } = await supabase.from('workout_sets').delete().eq('id', workoutId);
@@ -112,11 +118,11 @@ export function useWorkouts(user: User | null) {
      }
   }, [toast]);
 
-  const addFolder = useCallback(async (name: string, description: string) => {
+  const addFolder = useCallback(async (name: string, notes: string) => {
     if (!user) return;
     const { data, error } = await supabase
         .from('folders')
-        .insert({ name, description, user_id: user.id })
+        .insert({ name, notes, user_id: user.id })
         .select()
         .single();
     

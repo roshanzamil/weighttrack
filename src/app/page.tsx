@@ -73,22 +73,22 @@ import { cn } from "@/lib/utils";
 const popularExercises = [
     // Chest
     "Bench Press", "Incline Bench Press", "Decline Bench Press", "Dumbbell Press", "Incline Dumbbell Press",
-    "Dumbbell Flyes", "Cable Crossover", "Push Up", "Dips", "Machine Chest Press",
+    "Dumbbell Flyes", "Cable Crossover", "Push Up", "Dips", "Machine Chest Press", "Peck Deck",
     // Back
     "Deadlift", "Barbell Row", "Bent Over Row", "T-Bar Row", "Pendlay Row", "Pull Up", "Chin Up",
-    "Lat Pulldown", "Seated Cable Row", "Dumbbell Row", "Good Mornings",
+    "Lat Pulldown", "Seated Cable Row", "Dumbbell Row", "Good Mornings", "Back Extension",
     // Legs
     "Squat", "Front Squat", "Leg Press", "Leg Extension", "Leg Curl", "Romanian Deadlift",
-    "Bulgarian Split Squat", "Lunge", "Calf Raise", "Hip Thrust", "Hack Squat",
+    "Bulgarian Split Squat", "Lunge", "Calf Raise", "Hip Thrust", "Hack Squat", "Goblet Squat",
     // Shoulders
     "Overhead Press", "Arnold Press", "Dumbbell Lateral Raise", "Front Raise", "Reverse Pec-Deck",
-    "Face Pull", "Upright Row", "Shrugs",
+    "Face Pull", "Upright Row", "Shrugs", "Military Press", "Seated Dumbbell Press",
     // Biceps
-    "Barbell Curl", "Dumbbell Curl", "Hammer Curl", "Preacher Curl", "Concentration Curl", "Cable Curl",
+    "Barbell Curl", "Dumbbell Curl", "Hammer Curl", "Preacher Curl", "Concentration Curl", "Cable Curl", "Incline Dumbbell Curl",
     // Triceps
-    "Tricep Extension", "Skull Crusher", "Tricep Pushdown", "Close Grip Bench Press", "Overhead Tricep Extension",
+    "Tricep Extension", "Skull Crusher", "Tricep Pushdown", "Close Grip Bench Press", "Overhead Tricep Extension", "Tricep Dips",
     // Abs
-    "Crunch", "Leg Raise", "Plank", "Russian Twist", "Cable Crunch", "Ab Roller"
+    "Crunch", "Leg Raise", "Plank", "Russian Twist", "Cable Crunch", "Ab Roller", "Hanging Leg Raise"
 ];
 
 function EditSetDialog({ set, isOpen, onOpenChange, onUpdateSet, onDeleteSet, exerciseName }) {
@@ -588,7 +588,7 @@ function MainContent({user}: {user: User}) {
 
 
   const [newFolderName, setNewFolderName] = useState("");
-  const [newFolderDescription, setNewFolderDescription] = useState("");
+  const [newFolderNotes, setNewFolderNotes] = useState("");
   const [activeView, setActiveView] = useState<'workouts' | 'folder' | 'exercise'>('workouts');
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
@@ -597,9 +597,9 @@ function MainContent({user}: {user: User}) {
 
   const handleAddFolder = () => {
     if (newFolderName.trim()) {
-        addFolder(newFolderName.trim(), newFolderDescription.trim());
+        addFolder(newFolderName.trim(), newFolderNotes.trim());
         setNewFolderName("");
-        setNewFolderDescription("");
+        setNewFolderNotes("");
         toast({ title: "Folder created!" });
     }
   }
@@ -699,7 +699,7 @@ function MainContent({user}: {user: User}) {
                 <DialogTrigger asChild>
                     <button className="w-full text-left p-2 rounded-md hover:bg-accent flex items-center gap-3 text-primary">
                         <Plus className="w-5 h-5"/>
-                        <span className="font-semibold">New Workout...</span>
+                        <span className="font-semibold">New Workout Folder...</span>
                     </button>
                 </DialogTrigger>
                 <DialogContent>
@@ -712,8 +712,8 @@ function MainContent({user}: {user: User}) {
                             <Input id="folder-name" placeholder="e.g. Upper Body" value={newFolderName} onChange={(e) => setNewFolderName(e.target.value)} />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="folder-description">Description</Label>
-                            <Textarea id="folder-description" placeholder="A short description of this workout plan." value={newFolderDescription} onChange={(e) => setNewFolderDescription(e.target.value)} />
+                            <Label htmlFor="folder-notes">Notes</Label>
+                            <Textarea id="folder-notes" placeholder="e.g. Focus on slow, controlled reps this week." value={newFolderNotes} onChange={(e) => setNewFolderNotes(e.target.value)} />
                         </div>
                     </div>
                     <DialogFooter>
@@ -733,10 +733,13 @@ function MainContent({user}: {user: User}) {
                  <button key={folder.id} onClick={() => {
                     setSelectedFolderId(folder.id);
                     setActiveView('folder');
-                 }} className="w-full text-left p-2 rounded-md hover:bg-accent flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <BookOpen className="w-5 h-5"/>
-                        <span>{folder.name}</span>
+                 }} className="w-full text-left p-3 rounded-md hover:bg-accent flex items-center justify-between">
+                    <div className="flex items-start gap-3">
+                        <BookOpen className="w-5 h-5 mt-1"/>
+                        <div className="flex flex-col items-start">
+                            <span>{folder.name}</span>
+                            {folder.notes && <p className="text-xs text-muted-foreground text-left">{folder.notes}</p>}
+                        </div>
                     </div>
                     <div className="flex items-center gap-2 text-muted-foreground">
                         <span>{folder.exercises.length}</span>
@@ -792,5 +795,3 @@ export default function Home() {
 
     return <MainContent user={user} />;
 }
-
-    
