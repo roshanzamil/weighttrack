@@ -91,8 +91,7 @@ export async function getClientsForTrainer() {
          const { data: clientsData, error: clientsError } = await supabase
             .from('users')
             .select('id, raw_user_meta_data, email')
-            .in('id', clientIds)
-            .schema('auth');
+            .in('id', clientIds);
         
         if (clientsError) {
              console.error('Error fetching client details:', clientsError.message);
@@ -161,8 +160,7 @@ export async function getPendingInvitationsForClient() {
     const { data: trainersData, error: trainersError } = await supabase
         .from('users')
         .select('id, raw_user_meta_data, email')
-        .in('id', trainerIds)
-        .schema('auth');
+        .in('id', trainerIds);
 
     
     if (trainersError) {
@@ -312,7 +310,6 @@ export async function getTrainerForClient() {
         .from('users')
         .select('raw_user_meta_data, email')
         .eq('id', invitation.trainer_id)
-        .schema('auth')
         .single();
         
     if (trainerError || !trainerData) {
