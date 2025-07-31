@@ -16,12 +16,17 @@ interface TrainerPageProps {
 
 export function TrainerPage({ user, onRoleChange }: TrainerPageProps) {
     const [loading, setLoading] = useState(false);
+    // Optimistic UI state
+    const [isOptimisticTrainer, setIsOptimisticTrainer] = useState(user.user_metadata?.role === 'trainer');
     const { toast } = useToast();
 
     const handleBecomeTrainer = async () => {
         setLoading(true);
-        // Pass the user's ID to the server action
+        // Optimistically update the UI
+        setIsOptimisticTrainer(true);
+
         const result = await updateUserRole(user.id, 'trainer');
+        
         if (result.success) {
             toast({
                 title: "Congratulations!",
@@ -30,15 +35,17 @@ export function TrainerPage({ user, onRoleChange }: TrainerPageProps) {
             onRoleChange();
         } else {
             toast({
-                title: "Error",
-                description: result.error,
+                title: "Update Failed",
+                description: "Could not update your role in the database. Please try again later.",
                 variant: 'destructive',
             })
+            // Revert the optimistic update on failure
+            setIsOptimisticTrainer(false);
         }
         setLoading(false);
     }
     
-    const isTrainer = user.user_metadata?.role === 'trainer';
+    const isTrainer = user.user_metadata?.role === 'trainer' || isOptimisticTrainer;
 
     return (
         <div className="flex flex-col h-full">
