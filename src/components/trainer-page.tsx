@@ -1,24 +1,13 @@
 
 "use client"
 
-import { Bot, UserPlus, Sparkles, Building, Users, Undo2 } from "lucide-react"
+import { Bot, UserPlus, Sparkles, Building, Users } from "lucide-react"
 import { Button } from "./ui/button"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
 import { useState } from "react"
-import { updateUserRole, removeTrainerRole } from "@/app/actions"
+import { updateUserRole } from "@/app/actions"
 import { useToast } from "@/hooks/use-toast"
 import type { User } from "@supabase/supabase-js"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
 
 
 interface TrainerPageProps {
@@ -51,25 +40,6 @@ export function TrainerPage({ user, onRoleChange }: TrainerPageProps) {
         }
         setLoading(false);
     }
-
-    const handleRemoveTrainer = async () => {
-        setLoading(true);
-        const result = await removeTrainerRole();
-        if (result.success) {
-            toast({
-                title: "Account Updated",
-                description: "You are now a standard user.",
-            });
-            onRoleChange();
-        } else {
-             toast({
-                title: "Update Failed",
-                description: result.error || "Could not update your role. Please try again later.",
-                variant: 'destructive',
-            })
-        }
-        setLoading(false);
-    }
     
     return (
         <div className="flex flex-col h-full">
@@ -91,37 +61,6 @@ export function TrainerPage({ user, onRoleChange }: TrainerPageProps) {
                             <p className="text-muted-foreground mt-2">This is where you'll see your client list, assign workout plans, and track their progress.</p>
                             <Button className="mt-6" size="lg">Add New Client</Button>
                         </div>
-
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Account Settings</CardTitle>
-                                <CardDescription>Manage your trainer account status.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                 <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                        <Button variant="destructive" disabled={loading}>
-                                            <Undo2 className="mr-2"/>
-                                            Revert to Standard Account
-                                        </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            This action will remove your trainer status. You will lose access to the trainer dashboard and client management features. You can become a trainer again at any time.
-                                        </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={handleRemoveTrainer} disabled={loading}>
-                                            {loading ? 'Reverting...' : 'Yes, revert my account'}
-                                        </AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
-                            </CardContent>
-                        </Card>
                      </div>
                 ) : (
                     <Card className="bg-primary/5 border-primary/20 text-center">

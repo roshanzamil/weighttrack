@@ -761,12 +761,18 @@ function MainContent({user}: {user: User}) {
         }
     }
 
+    useEffect(() => {
+      if (user) {
+        setCurrentUser(user);
+      }
+    }, [user]);
+
     return (
         <div className="h-full flex flex-col">
             <main className="flex-1 overflow-y-auto">
                 {activeTab === 'workouts' && <WorkoutsView user={currentUser} onSignOut={handleSignOut} />}
                 {activeTab === 'trainer' && <TrainerPage user={currentUser} onRoleChange={refreshUser} />}
-                {activeTab === 'profile' && <ProfilePage user={currentUser} onSignOut={handleSignOut} />}
+                {activeTab === 'profile' && <ProfilePage user={currentUser} onSignOut={handleSignOut} onRoleChange={refreshUser} />}
             </main>
             <BottomNavBar activeTab={activeTab} onTabChange={setActiveTab} />
         </div>
@@ -781,9 +787,19 @@ export default function Home() {
     const supabase = createClient();
 
     useEffect(() => {
+        const getSession = async () => {
+          const { data: { session } } = await supabase.auth.getSession();
+          setUser(session?.user ?? null);
+          if (!session?.user) {
+              router.push('/login');
+          }
+          setLoading(false);
+        }
+        getSession();
+
         const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
            setUser(session?.user ?? null);
-           if (!session?.user) {
+            if (!session?.user) {
                 router.push('/login');
            }
            setLoading(false);
