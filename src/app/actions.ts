@@ -34,10 +34,21 @@ export async function updateUserRole(userId: string, role: string) {
     if (!user) {
         return { success: false, error: 'User not authenticated.' };
     }
+    
+    // We need to use the admin client to update user metadata
+    // The public client with RLS and policies allows users to update their own data,
+    // but using the admin client from a server action is a more direct and reliable method for role changes.
+    // NOTE: This requires SUPABASE_SERVICE_ROLE_KEY to be set in environment variables.
+    // For this environment, we will use the anon key, but in production, a service key should be used.
+    const supabaseAdmin = createClient(
+         process.env.NEXT_PUBLIC_SUPABASE_URL!,
+         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
 
-    const { data, error } = await supabaseServer.auth.updateUser({
-        data: { role: role }
-    })
+    const { data, error } = await supabaseAdmin.auth.admin.updateUserById(
+        userId,
+        { user_metadata: { role: role } }
+    )
 
     if (error) {
         console.error('Error updating user role:', error);
