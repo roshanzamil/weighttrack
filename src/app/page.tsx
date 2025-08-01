@@ -537,7 +537,7 @@ function FolderView({ folder, onBack, onAddExercise, onDeleteFolder, onSelectExe
               <Plus className="mr-2" /> Add Exercise
             </Button>
           </DialogTrigger>
-          <DialogContent onInteractOutside={(e) => e.preventDefault()}>
+          <DialogContent>
             <DialogHeader>
               <DialogTitle>Add an Exercise</DialogTitle>
               <DialogDescription>
@@ -547,7 +547,7 @@ function FolderView({ folder, onBack, onAddExercise, onDeleteFolder, onSelectExe
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>Popular Exercises</Label>
-                 <Popover open={isComboboxOpen} onOpenChange={setIsComboboxOpen}>
+                 <Popover open={isComboboxOpen} onOpenChange={setIsComboboxOpen} modal={false}>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
