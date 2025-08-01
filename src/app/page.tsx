@@ -537,7 +537,7 @@ function FolderView({ folder, onBack, onAddExercise, onDeleteFolder, onSelectExe
               <Plus className="mr-2" /> Add Exercise
             </Button>
           </DialogTrigger>
-          <DialogContent onPointerDownOutside={(e) => e.preventDefault()} vaul-drawer-wrapper="">
+          <DialogContent onPointerDownOutside={(e) => e.preventDefault()}>
             <DialogHeader>
               <DialogTitle>Add an Exercise</DialogTitle>
               <DialogDescription>
@@ -547,7 +547,7 @@ function FolderView({ folder, onBack, onAddExercise, onDeleteFolder, onSelectExe
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>Popular Exercises</Label>
-                 <Popover open={isComboboxOpen} onOpenChange={setIsComboboxOpen}>
+                 <Popover open={isComboboxOpen} onOpenChange={setIsComboboxOpen} modal={true}>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
@@ -562,7 +562,10 @@ function FolderView({ folder, onBack, onAddExercise, onDeleteFolder, onSelectExe
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                    <PopoverContent 
+                      className="w-[--radix-popover-trigger-width] p-0"
+                      onInteractOutside={(e) => e.preventDefault()}
+                    >
                       <Command>
                         <CommandInput placeholder="Search exercises..." />
                         <CommandList>
@@ -909,5 +912,3 @@ export default function Home() {
     
     return <MainContent user={user} />
 }
-
-    
