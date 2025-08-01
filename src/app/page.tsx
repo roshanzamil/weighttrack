@@ -537,7 +537,7 @@ function FolderView({ folder, onBack, onAddExercise, onDeleteFolder, onSelectExe
               <Plus className="mr-2" /> Add Exercise
             </Button>
           </DialogTrigger>
-          <DialogContent onPointerDownOutside={(e) => e.preventDefault()}>
+          <DialogContent vaul-drawer-wrapper="">
             <DialogHeader>
               <DialogTitle>Add an Exercise</DialogTitle>
               <DialogDescription>
@@ -562,10 +562,7 @@ function FolderView({ folder, onBack, onAddExercise, onDeleteFolder, onSelectExe
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent 
-                      className="w-[--radix-popover-trigger-width] p-0"
-                      onInteractOutside={(e) => e.preventDefault()}
-                    >
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                       <Command>
                         <CommandInput placeholder="Search exercises..." />
                         <CommandList>
