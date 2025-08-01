@@ -537,9 +537,12 @@ function FolderView({ folder, onBack, onAddExercise, onDeleteFolder, onSelectExe
               <Plus className="mr-2" /> Add Exercise
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent onPointerDownOutside={(e) => e.preventDefault()} vaul-drawer-wrapper="">
             <DialogHeader>
               <DialogTitle>Add an Exercise</DialogTitle>
+              <DialogDescription>
+                Select a popular exercise or add your own custom one.
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
@@ -562,8 +565,8 @@ function FolderView({ folder, onBack, onAddExercise, onDeleteFolder, onSelectExe
                     <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                       <Command>
                         <CommandInput placeholder="Search exercises..." />
-                        <CommandEmpty>No exercise found.</CommandEmpty>
                         <CommandList>
+                            <CommandEmpty>No exercise found.</CommandEmpty>
                             <CommandGroup>
                             {popularExercises.map((ex) => (
                                 <CommandItem
