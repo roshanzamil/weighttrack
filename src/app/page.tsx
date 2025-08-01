@@ -152,7 +152,7 @@ function EditSetDialog({ set, isOpen, onOpenChange, onUpdateSet, onDeleteSet, ex
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent onPointerDownOutside={(e) => e.preventDefault()} vaul-drawer-wrapper="">
+            <DialogContent vaul-drawer-wrapper="">
                 <DialogHeader>
                     <DialogTitle>Edit Set</DialogTitle>
                 </DialogHeader>
@@ -537,7 +537,7 @@ function FolderView({ folder, onBack, onAddExercise, onDeleteFolder, onSelectExe
               <Plus className="mr-2" /> Add Exercise
             </Button>
           </DialogTrigger>
-          <DialogContent vaul-drawer-wrapper="">
+          <DialogContent>
             <DialogHeader>
               <DialogTitle>Add an Exercise</DialogTitle>
               <DialogDescription>
@@ -547,7 +547,7 @@ function FolderView({ folder, onBack, onAddExercise, onDeleteFolder, onSelectExe
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>Popular Exercises</Label>
-                 <Popover open={isComboboxOpen} onOpenChange={setIsComboboxOpen} modal={true}>
+                 <Popover open={isComboboxOpen} onOpenChange={setIsComboboxOpen}>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
