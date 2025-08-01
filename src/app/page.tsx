@@ -152,7 +152,7 @@ function EditSetDialog({ set, isOpen, onOpenChange, onUpdateSet, onDeleteSet, ex
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent vaul-drawer-wrapper="">
+            <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Edit Set</DialogTitle>
                 </DialogHeader>
@@ -566,6 +566,7 @@ function FolderView({ folder, onBack, onAddExercise, onDeleteFolder, onSelectExe
                       <Command>
                         <CommandInput placeholder="Search exercises..." />
                         <CommandList>
+                           <ScrollArea className="h-[200px]">
                             <CommandEmpty>No exercise found.</CommandEmpty>
                             <CommandGroup>
                             {popularExercises.map((ex) => (
@@ -587,6 +588,7 @@ function FolderView({ folder, onBack, onAddExercise, onDeleteFolder, onSelectExe
                                 </CommandItem>
                             ))}
                             </CommandGroup>
+                           </ScrollArea>
                         </CommandList>
                       </Command>
                     </PopoverContent>
