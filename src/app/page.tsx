@@ -18,6 +18,8 @@ import {
   Target,
   Repeat,
   Info,
+  Check,
+  ChevronsUpDown,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -38,13 +40,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList
+} from "@/components/ui/command";
 import { type NewWorkoutSet, type Exercise, type Folder, type WorkoutSet } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
@@ -62,43 +66,65 @@ import { TrainerPage } from "@/components/trainer-page";
 import { ProfilePage } from "@/components/profile-page";
 import { WorkoutLogger } from "@/components/workout-logger";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 
 const popularExercises = [
     // Chest
-    "Bench Press", "Incline Bench Press", "Decline Bench Press", "Dumbbell Press", "Incline Dumbbell Press",
-    "Dumbbell Flyes", "Cable Crossover", "Push Up", "Dips", "Machine Chest Press", "Peck Deck", "Cable Fly", "Incline Dumbbell Flyes",
-    "Landmine Press", "Svend Press", "Chest Squeeze", "Dumbbell Pullover",
+    "Barbell Bench Press", "Dumbbell Bench Press", "Incline Barbell Bench Press", "Incline Dumbbell Bench Press",
+    "Decline Barbell Bench Press", "Decline Dumbbell Bench Press", "Push Up", "Dips", "Chest Fly (Dumbbell)",
+    "Chest Fly (Machine)", "Cable Crossover", "Peck Deck Machine", "Incline Dumbbell Flyes", "Decline Dumbbell Flyes",
+    "Landmine Press", "Svend Press", "Chest Squeeze Push-up", "Dumbbell Pullover", "Around the Worlds",
+
     // Back
-    "Deadlift", "Barbell Row", "Bent Over Row", "T-Bar Row", "Pendlay Row", "Pull Up", "Chin Up",
-    "Lat Pulldown", "Seated Cable Row", "Dumbbell Row", "Good Mornings", "Back Extension", "Single Arm Dumbbell Row", "Face Pull",
-    "Rack Pull", "Kroc Row", "Meadows Row", "Chest-Supported Row", "Inverted Row", "Hyperextension",
+    "Deadlift (Conventional)", "Deadlift (Sumo)", "Barbell Row", "Bent Over Row", "T-Bar Row", "Pendlay Row",
+    "Pull Up", "Chin Up", "Lat Pulldown (Wide Grip)", "Lat Pulldown (Close Grip)", "Seated Cable Row",
+    "Dumbbell Row", "Single Arm Dumbbell Row", "Good Mornings", "Back Extension (Hyperextension)",
+    "Face Pull", "Rack Pull", "Kroc Row", "Meadows Row", "Chest-Supported Row", "Inverted Row", "Superman",
+    "Renegade Row", "Lat Prayer",
+
     // Legs
-    "Squat", "Front Squat", "Leg Press", "Leg Extension", "Leg Curl", "Romanian Deadlift",
-    "Bulgarian Split Squat", "Lunge", "Calf Raise", "Hip Thrust", "Hack Squat", "Goblet Squat", "Standing Calf Raise", "Seated Calf Raise",
-    "Box Squat", "Sissy Squat", "Nordic Hamstring Curl", "Pistol Squat",
+    "Back Squat", "Front Squat", "Leg Press", "Leg Extension", "Lying Leg Curl", "Seated Leg Curl",
+    "Romanian Deadlift", "Stiff-Legged Deadlift", "Bulgarian Split Squat", "Lunge (Dumbbell/Barbell)",
+    "Walking Lunge", "Calf Raise (Standing)", "Calf Raise (Seated)", "Hip Thrust (Barbell)", "Hack Squat",
+    "Goblet Squat", "Box Squat", "Sissy Squat", "Nordic Hamstring Curl", "Pistol Squat", "Glute Bridge",
+    "Hip Abduction (Machine)", "Hip Adduction (Machine)", "Step-up",
+
     // Shoulders
-    "Overhead Press", "Arnold Press", "Dumbbell Lateral Raise", "Front Raise", "Reverse Pec-Deck",
-    "Face Pull", "Upright Row", "Shrugs", "Military Press", "Seated Dumbbell Press", "Dumbbell Shoulder Press", "Cable Lateral Raise",
-    "Lu raises", "Y-Raises", "Bus Drivers", "Viking Press",
+    "Overhead Press (Barbell/Military Press)", "Seated Dumbbell Press", "Arnold Press", "Dumbbell Lateral Raise",
+    "Front Raise (Dumbbell/Plate)", "Reverse Pec-Deck", "Bent-Over Dumbbell Raise", "Upright Row",
+    "Barbell Shrug", "Dumbbell Shrug", "Cable Lateral Raise", "Lu Raises", "Y-Raises", "Bus Drivers",
+    "Viking Press", "Pike Push-up", "Handstand Push-up",
+
     // Biceps
-    "Barbell Curl", "Dumbbell Curl", "Hammer Curl", "Preacher Curl", "Concentration Curl", "Cable Curl", "Incline Dumbbell Curl", "Spider Curl",
-    "Zottman Curl", "Waiter Curl", "Reverse Barbell Curl",
+    "Barbell Curl", "Dumbbell Curl", "Alternating Dumbbell Curl", "Hammer Curl", "Preacher Curl (Barbell/Dumbbell)",
+    "Concentration Curl", "Cable Curl (Straight Bar/EZ Bar)", "Incline Dumbbell Curl", "Spider Curl",
+    "Zottman Curl", "Waiter Curl", "Reverse Barbell Curl", "Drag Curl",
+
     // Triceps
-    "Tricep Extension", "Skull Crusher", "Tricep Pushdown", "Close Grip Bench Press", "Overhead Tricep Extension", "Tricep Dips", "Rope Pushdown",
-    "JM Press", "Tate Press", "Diamond Push-up",
+    "Close Grip Bench Press", "Skull Crusher (Lying Tricep Extension)", "Tricep Pushdown (Rope/V-Bar)",
+    "Overhead Tricep Extension (Dumbbell/Cable)", "Tricep Dips (Bench/Parallel Bars)", "Rope Pushdown",
+    "JM Press", "Tate Press", "Diamond Push-up", "Kickback (Dumbbell/Cable)", "Single Arm Tricep Pushdown",
+
     // Abs
-    "Crunch", "Leg Raise", "Plank", "Russian Twist", "Cable Crunch", "Ab Roller", "Hanging Leg Raise", "Side Plank", "Bicycle Crunch",
-    "Woodchopper", "Pallof Press", "Dragon Flag",
+    "Crunch", "Sit-up", "Leg Raise (Lying/Hanging)", "Plank", "Russian Twist", "Cable Crunch", "Ab Roller",
+    "Side Plank", "Bicycle Crunch", "Woodchopper (Cable)", "Pallof Press", "Dragon Flag", "V-up", "Flutter Kicks",
+    "Mountain Climber",
+
     // Forearms
-    "Wrist Curl", "Reverse Wrist Curl", "Farmer's Walk", "Plate Pinch", "Gripper",
-    // Glutes
-    "Glute Bridge", "Cable Kickback", "Banded Side Walk", "Fire Hydrant", "Hip Abduction",
-    // Calves
-    "Donkey Calf Raise", "Leg Press Calf Raise",
+    "Wrist Curl (Dumbbell/Barbell)", "Reverse Wrist Curl", "Farmer's Walk", "Plate Pinch", "Gripper", "Behind-the-Back Wrist Curl",
+
+    // Glutes (often covered in Legs, but can be specialized)
+    "Cable Kickback", "Banded Side Walk", "Fire Hydrant", "Hip Abduction", "Sumo Squat", "Single-Leg Glute Bridge",
+
+    // Calves (often covered in Legs)
+    "Donkey Calf Raise", "Leg Press Calf Raise", "Jump Rope",
+
     // Full Body / Compound
-    "Clean and Jerk", "Snatch", "Thruster", "Kettlebell Swing", "Burpee", "Turkish Get-Up"
+    "Clean and Jerk", "Snatch", "Thruster (Barbell/Dumbbell)", "Kettlebell Swing", "Burpee", "Turkish Get-Up",
+    "Man Maker", "Bear Crawl", "Tire Flip", "Sled Push/Pull"
 ];
+
 
 function EditSetDialog({ set, isOpen, onOpenChange, onUpdateSet, onDeleteSet, exerciseName }) {
     if (!set) return null;
@@ -460,6 +486,7 @@ function FolderView({ folder, onBack, onAddExercise, onDeleteFolder, onSelectExe
   const [newExerciseName, setNewExerciseName] = useState("");
   const [selectedPopularExercise, setSelectedPopularExercise] = useState("");
   const { toast } = useToast();
+  const [isComboboxOpen, setIsComboboxOpen] = useState(false);
 
   const handleAddExercise = () => {
     const exerciseToAdd = newExerciseName.trim() || selectedPopularExercise;
@@ -517,16 +544,50 @@ function FolderView({ folder, onBack, onAddExercise, onDeleteFolder, onSelectExe
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>Popular Exercises</Label>
-                <Select onValueChange={setSelectedPopularExercise} value={selectedPopularExercise}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a popular exercise" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {popularExercises.map(ex => (
-                      <SelectItem key={ex} value={ex}>{ex}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                 <Popover open={isComboboxOpen} onOpenChange={setIsComboboxOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={isComboboxOpen}
+                        className="w-full justify-between"
+                        disabled={!!newExerciseName.trim()}
+                      >
+                        {selectedPopularExercise
+                          ? popularExercises.find((ex) => ex === selectedPopularExercise)
+                          : "Select exercise..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                      <Command>
+                        <CommandInput placeholder="Search exercises..." />
+                        <CommandEmpty>No exercise found.</CommandEmpty>
+                        <CommandList>
+                            <CommandGroup>
+                            {popularExercises.map((ex) => (
+                                <CommandItem
+                                key={ex}
+                                value={ex}
+                                onSelect={(currentValue) => {
+                                    setSelectedPopularExercise(currentValue === selectedPopularExercise ? "" : currentValue)
+                                    setIsComboboxOpen(false)
+                                }}
+                                >
+                                <Check
+                                    className={cn(
+                                    "mr-2 h-4 w-4",
+                                    selectedPopularExercise === ex ? "opacity-100" : "opacity-0"
+                                    )}
+                                />
+                                {ex}
+                                </CommandItem>
+                            ))}
+                            </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
               </div>
               <div className="text-center text-sm text-muted-foreground">OR</div>
               <div className="space-y-2">
