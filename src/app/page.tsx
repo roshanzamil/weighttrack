@@ -565,7 +565,7 @@ function FolderView({ folder, onBack, onAddExercise, onDeleteFolder, onSelectExe
                         <CommandList>
                           <CommandEmpty>No exercise found.</CommandEmpty>
                           <CommandGroup>
-                            {popularExercises.map((ex) => (
+                            {popularExercises.slice().sort().map((ex) => (
                               <CommandItem
                                 key={ex}
                                 value={ex}
