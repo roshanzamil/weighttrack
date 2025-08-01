@@ -545,54 +545,54 @@ function FolderView({ folder, onBack, onAddExercise, onDeleteFolder, onSelectExe
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
-              <div className="space-y-2">
+               <div className="space-y-2">
                 <Label>Popular Exercises</Label>
-                 <Popover open={isComboboxOpen} onOpenChange={setIsComboboxOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={isComboboxOpen}
-                        className="w-full justify-between"
-                        disabled={!!newExerciseName.trim()}
-                      >
-                        {selectedPopularExercise
-                          ? popularExercises.find((ex) => ex === selectedPopularExercise)
-                          : "Select exercise..."}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                      <Command>
-                        <CommandInput placeholder="Search exercises..." />
-                         <ScrollArea className="h-[200px]">
-                           <CommandList>
-                            <CommandEmpty>No exercise found.</CommandEmpty>
-                            <CommandGroup>
+                <DropdownMenu open={isComboboxOpen} onOpenChange={setIsComboboxOpen}>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-between"
+                      disabled={!!newExerciseName.trim()}
+                    >
+                      {selectedPopularExercise || "Select exercise..."}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width] p-0">
+                    <Command>
+                      <CommandInput placeholder="Search exercises..." />
+                      <ScrollArea className="h-[200px]">
+                        <CommandList>
+                          <CommandEmpty>No exercise found.</CommandEmpty>
+                          <CommandGroup>
                             {popularExercises.map((ex) => (
-                                <CommandItem
+                              <CommandItem
                                 key={ex}
                                 value={ex}
                                 onSelect={(currentValue) => {
-                                    setSelectedPopularExercise(currentValue === selectedPopularExercise ? "" : currentValue)
-                                    setIsComboboxOpen(false)
+                                  setSelectedPopularExercise(
+                                    currentValue === selectedPopularExercise ? "" : currentValue
+                                  );
+                                  setIsComboboxOpen(false);
                                 }}
-                                >
+                              >
                                 <Check
-                                    className={cn(
+                                  className={cn(
                                     "mr-2 h-4 w-4",
-                                    selectedPopularExercise === ex ? "opacity-100" : "opacity-0"
-                                    )}
+                                    selectedPopularExercise === ex
+                                      ? "opacity-100"
+                                      : "opacity-0"
+                                  )}
                                 />
                                 {ex}
-                                </CommandItem>
+                              </CommandItem>
                             ))}
-                            </CommandGroup>
-                           </CommandList>
-                         </ScrollArea>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
+                          </CommandGroup>
+                        </CommandList>
+                      </ScrollArea>
+                    </Command>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
               <div className="text-center text-sm text-muted-foreground">OR</div>
               <div className="space-y-2">
