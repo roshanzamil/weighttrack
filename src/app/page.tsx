@@ -537,7 +537,7 @@ function FolderView({ folder, onBack, onAddExercise, onDeleteFolder, onSelectExe
               <Plus className="mr-2" /> Add Exercise
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent onInteractOutside={(e) => e.preventDefault()}>
             <DialogHeader>
               <DialogTitle>Add an Exercise</DialogTitle>
               <DialogDescription>
