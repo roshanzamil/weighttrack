@@ -4,12 +4,9 @@ import * as React from "react"
 import { type DialogProps } from "@radix-ui/react-dialog"
 import { Command as CommandPrimitive } from "cmdk"
 import { Search } from "lucide-react"
-import { useSwipeable } from 'react-swipeable';
-
 
 import { cn } from "@/lib/utils"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
-import { ScrollArea } from "./scroll-area"
 
 const Command = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive>,
@@ -62,26 +59,13 @@ CommandInput.displayName = CommandPrimitive.Input.displayName
 const CommandList = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.List>,
   React.ComponentPropsWithoutRef<typeof CommandPrimitive.List>
->(({ className, children, ...props }, ref) => {
-  const listRef = React.useRef<HTMLDivElement>(null);
-  const handlers = useSwipeable({
-      onSwiped: (eventData) => {
-          if (listRef.current) {
-              listRef.current.scrollTop += (eventData.dir === 'Up' ? -1 : 1) * eventData.deltaY * 2;
-          }
-      },
-      preventScrollOnSwipe: true,
-      trackMouse: true
-  });
-  
-  return (
-    <div {...handlers} ref={listRef} className={cn("max-h-[300px] overflow-y-auto overflow-x-hidden", className)}>
-      <CommandPrimitive.List ref={ref} {...props}>
-          {children}
-      </CommandPrimitive.List>
-    </div>
-  )
-})
+>(({ className, ...props }, ref) => (
+  <CommandPrimitive.List
+    ref={ref}
+    className={cn("max-h-[300px] overflow-y-auto overflow-x-hidden", className)}
+    {...props}
+  />
+))
 
 CommandList.displayName = CommandPrimitive.List.displayName
 

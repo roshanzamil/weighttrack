@@ -547,7 +547,7 @@ function FolderView({ folder, onBack, onAddExercise, onDeleteFolder, onSelectExe
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>Popular Exercises</Label>
-                 <Popover open={isComboboxOpen} onOpenChange={setIsComboboxOpen} modal={false}>
+                 <Popover open={isComboboxOpen} onOpenChange={setIsComboboxOpen}>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
@@ -565,8 +565,8 @@ function FolderView({ folder, onBack, onAddExercise, onDeleteFolder, onSelectExe
                     <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                       <Command>
                         <CommandInput placeholder="Search exercises..." />
-                        <CommandList>
-                           <ScrollArea className="h-[200px]">
+                         <ScrollArea className="h-[200px]">
+                           <CommandList>
                             <CommandEmpty>No exercise found.</CommandEmpty>
                             <CommandGroup>
                             {popularExercises.map((ex) => (
@@ -588,8 +588,8 @@ function FolderView({ folder, onBack, onAddExercise, onDeleteFolder, onSelectExe
                                 </CommandItem>
                             ))}
                             </CommandGroup>
-                           </ScrollArea>
-                        </CommandList>
+                           </CommandList>
+                         </ScrollArea>
                       </Command>
                     </PopoverContent>
                   </Popover>
